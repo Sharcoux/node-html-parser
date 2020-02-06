@@ -328,7 +328,7 @@ describe('HTML Parser', function () {
 				root.firstChild.attributes.should.eql({
 					'a': '13',
 				});
-				root.firstChild.toString().should.eql('<p a=13></p>');
+				root.firstChild.toString().should.eql('<p a="13"></p>');
 			});
 			it('should add an attribute to the element', function () {
 				var root = parseHTML('<p a=12></p>');
@@ -337,27 +337,30 @@ describe('HTML Parser', function () {
 					'a': '12',
 					'b': '13',
 				});
-				root.firstChild.toString().should.eql('<p a=12 b=13></p>');
+				root.firstChild.toString().should.eql('<p a="12" b="13"></p>');
+				root.firstChild.setAttribute('required', '');
+				root.firstChild.toString().should.eql('<p a="12" b="13" required></p>');
 			});
 			it('should remove an attribute from the element', function () {
-				var root = parseHTML('<p a=12 b=13 c=14></p>');
-				root.firstChild.setAttribute('b', null);
+				var root = parseHTML('<p a=12 b=13 c=14 data-id="!$$&amp;"></p>');
+				root.firstChild.setAttribute('b', undefined);
 				root.firstChild.setAttribute('c');
 				root.firstChild.attributes.should.eql({
 					'a': '12',
+					'data-id': "!$$&"
 				});
-				root.firstChild.toString().should.eql('<p a=12></p>');
+				root.firstChild.toString().should.eql('<p a="12" data-id="!$$&#x26;"></p>');
 			});
 		});
 
 		describe('#setAttributes', function () {
-			it('should return attributes of the element', function () {
+			it('should replace all attributes of the element', function () {
 				var root = parseHTML('<p a=12 data-id="!$$&amp;" yAz=\'1\' class="" disabled></p>');
 				root.firstChild.setAttributes({c: 12});
 				root.firstChild.attributes.should.eql({
 					'c': '12',
 				});
-				root.firstChild.toString().should.eql('<p c=12></p>');
+				root.firstChild.toString().should.eql('<p c="12"></p>');
 			});
 		});
 
