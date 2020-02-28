@@ -516,6 +516,14 @@ export class HTMLElement extends Node {
 	 * @param {string} value The value to set, or undefined to remove an attribute
 	 */
 	setAttribute(key: string, value: string) {
+		//Update the id property
+		if (key==="id") {
+			this.id = value;
+		}
+		//Update the classNames
+		else if (key==="class") {
+			this.classNames = value.split(/\s+/);
+		}
 		//Update the attributes map
 		const attrs = this.attributes;
 		if(value===undefined) delete attrs[key];
@@ -534,6 +542,14 @@ export class HTMLElement extends Node {
 	 * @param {Attributes} attributes the new attribute set
 	 */
 	setAttributes(attributes: Attributes) {
+		//Update the id property
+		if (attributes.id) {
+			this.id = attributes.id;
+		}
+		//Update the classNames
+		else if (attributes.class) {
+			this.classNames = attributes.class.split(/\s+/);
+		}
 		//Update the attributes map
 		if(this.attributes) {
 			Object.keys(this.attributes).forEach(key => delete this.attributes[key]);
