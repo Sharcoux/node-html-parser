@@ -80,6 +80,7 @@ __________________________
 * ## parse(data[, options])
 
 Parse given data, and return root of the generated DOM.
+The root is actually a fictive node that contains the nodes found in the content provided. The content can be found in `root.childNodes`, or accessed with `root.firstChild` if the parsed HTML has a root node (think about `<b>siblings</b> <i>nodes</i>`).
 
 - **data**, data to parse
 - **options**, parse options

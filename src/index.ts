@@ -10,10 +10,19 @@ export enum NodeType {
  * Node Class as base class for TextNode and HTMLElement.
  */
 export abstract class Node {
+	/** The node type.
+	 * * 1 for Elements
+	 * * 3 for Text Nodes
+	 * * 8 for Comments
+	 */
 	nodeType: NodeType;
+	/** Return the child nodes of this node */
 	childNodes = [] as Node[];
+	/** Return the unexcaped text content of this node */
 	text: string;
+	/** Return the raw text content of this node */
 	rawText: string;
+	/** Return the html representation of this node */
 	abstract toString(): String;
 }
 /**
@@ -832,19 +841,18 @@ const kBlockTextElements = {
  * Parses HTML and returns a root element
  * Parse a chuck of HTML source.
  * @param  {string} data      html
- * @return {HTMLElement}      root element
+ * @return {HTMLElement}      root fictive element. The parsed HTML can be found inside the root.childNodes property
  */
 export function parse(data: string, options?: {
 	lowerCaseTagName?: boolean;
-	noFix?: boolean;
 	script?: boolean;
 	style?: boolean;
 	pre?: boolean;
 	comment?: boolean;
 }) {
-	const root = new HTMLElement(null, {});
-	let currentParent = root;
-	const stack = [root];
+	const root = new HTMLElement(null, {}) as HTMLElement & { valid: boolean; };;
+	let currentParent: HTMLElement = root;
+	const stack: HTMLElement[] = [root];
 	let lastTextPos = -1;
 	options = options || {} as any;
 	let match: RegExpExecArray;
@@ -931,43 +939,38 @@ export function parse(data: string, options?: {
 			}
 		}
 	}
-	type Response = (HTMLElement | TextNode) & { valid: boolean; };
-	const valid = !!(stack.length === 1);
-	if (!options.noFix) {
-		const response = root as Response;
-		response.valid = valid;
-		while (stack.length > 1) {
-			// Handle each error elements.
-			const last = stack.pop();
-			const oneBefore = arr_back(stack);
-			if (last.parentNode && (last.parentNode as HTMLElement).parentNode) {
-				if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
-					// Pair error case <h3> <h3> handle : Fixes to <h3> </h3>
-					oneBefore.removeChild(last);
-					last.childNodes.forEach((child) => {
-						(oneBefore.parentNode as HTMLElement).appendChild(child);
-					});
-					stack.pop();
-				} else {
-					// Single error  <div> <h3> </div> handle: Just removes <h3>
-					oneBefore.removeChild(last);
-					last.childNodes.forEach((child) => {
-						oneBefore.appendChild(child);
-					});
-				}
-			} else {
-				// If it's final element just skip.
-			}
-		}
-		response.childNodes.forEach((node) => {
-			if (node instanceof HTMLElement) {
-				node.parentNode = null;
-			}
-		});
-		return response;
-	} else {
-		const response = new TextNode(data) as Response;
-		response.valid = valid;
-		return response;
+	root.valid = stack.length === 1;
+	if(lastTextPos===-1) {
+		root.appendChild(new TextNode(data))
+		return root
 	}
+	while (stack.length > 1) {
+		// Handle each error elements.
+		const last = stack.pop();
+		const oneBefore = arr_back(stack);
+		if (last.parentNode && (last.parentNode as HTMLElement).parentNode) {
+			if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
+				// Pair error case <h3> <h3> handle : Fixes to <h3> </h3>
+				oneBefore.removeChild(last);
+				last.childNodes.forEach((child) => {
+					(oneBefore.parentNode as HTMLElement).appendChild(child);
+				});
+				stack.pop();
+			} else {
+				// Single error  <div> <h3> </div> handle: Just removes <h3>
+				oneBefore.removeChild(last);
+				last.childNodes.forEach((child) => {
+					oneBefore.appendChild(child);
+				});
+			}
+		} else {
+			// If it's final element just skip.
+		}
+	}
+	root.childNodes.forEach((node) => {
+		if (node instanceof HTMLElement) {
+			node.parentNode = null;
+		}
+	});
+	return root;
 }
