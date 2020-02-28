@@ -101,6 +101,9 @@ Parse given data, and return root of the generated DOM.
 | property name  | description                                                                                            |
 |----------------|--------------------------------------------------------------------------------------------------------|
 | text           | Get unescaped text value of current node and its children. Like `innerText`. (slow for the first time) |
+| tagName        | Get the tag name of the current element                                                                |
+| classNames     | Get the classes of the current element                                                                 |
+| parentNode     | Get the parent HTMLNode                                                                                |
 | rawText        | Get escpaed (as-it) text value of current node and its children. May have `&amp;` in it. (fast)        |
 | structuredText | Get structured Text                                                                                    |
 | structure      | Get DOM structure                                                                                      |

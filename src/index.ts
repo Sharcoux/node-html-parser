@@ -120,7 +120,9 @@ function arr_back<T>(arr: T[]) {
 export class HTMLElement extends Node {
 	private _attrs: Attributes;
 	private _rawAttrs: RawAttributes;
+	/** This is a short hand for the id attribute of this node */
 	public id: string;
+	/** This is a short hand to get the list of the class names attribute of this node */
 	public classNames = [] as string[];
 	/**
 	 * Node Type declaration.
@@ -247,12 +249,14 @@ export class HTMLElement extends Node {
 		}
 	}
 
+	/** Retrieves the content of this node as an HTML string */
 	get innerHTML() {
 		return this.childNodes.map((child) => {
 			return child.toString();
 		}).join('');
 	}
 
+	/** Edit the HTML content of this node */
 	public set_content(content: string | Node | Node[]) {
 		if (content instanceof Node) {
 			content = [content];
@@ -263,6 +267,7 @@ export class HTMLElement extends Node {
 		this.childNodes = content as Node[];
 	}
 
+	/** Convert this node into its HTML representation. This is an alias to toString() method. */
 	get outerHTML() {
 		return this.toString();
 	}
