@@ -23,7 +23,7 @@ export abstract class Node {
 	/** Return the raw text content of this node */
 	rawText: string;
 	/** Return the html representation of this node */
-	abstract toString(): String;
+	abstract toString(): string;
 }
 /**
  * TextNode to contain a text element in DOM tree.
