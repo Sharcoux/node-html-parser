@@ -794,7 +794,7 @@ export class Matcher {
 }
 
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
-const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)\s*([^>]*?)(\/?)>/ig;
+var kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)((\s+[a-z-]*(=["'](.*?)["'])?)*)\s*(\/?)>/ig;
 const kAttributePattern = /(^|\s)(id|class)\s*=\s*("([^"]+)"|'([^']+)'|(\S+))/ig;
 const kSelfClosingElements = {
 	area: true,
@@ -883,7 +883,7 @@ export function parse(data: string, options?: {
 				attrs[attMatch[2]] = attMatch[4] || attMatch[5] || attMatch[6];
 			}
 
-			if (!match[4] && kElementsClosedByOpening[currentParent.tagName]) {
+			if (!match[7] && kElementsClosedByOpening[currentParent.tagName]) {
 				if (kElementsClosedByOpening[currentParent.tagName][match[2]]) {
 					stack.pop();
 					currentParent = arr_back(stack);
@@ -916,7 +916,7 @@ export function parse(data: string, options?: {
 				}
 			}
 		}
-		if (match[1] || match[4] ||
+		if (match[1] || match[7] ||
 			kSelfClosingElements[match[2]]) {
 			// </ or /> or <br> etc.
 			while (true) {
