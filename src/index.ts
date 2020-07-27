@@ -139,16 +139,19 @@ export class HTMLElement extends Node {
 	public nodeType = NodeType.ELEMENT_NODE;
 	/**
 	 * Creates an instance of HTMLElement.
-	 * @param keyAttrs	id and class attribute
 	 * @param [rawAttrs]	attributes in string
 	 *
 	 * @memberof HTMLElement
 	 */
-	constructor(public tagName: string, keyAttrs: KeyAttributes, private rawAttrs = '', public parentNode = null as Node) {
+	constructor(public tagName: string, private rawAttrs = '', public parentNode = null as Node) {
 		super();
-		this.rawAttrs = rawAttrs || '';
-		this.parentNode = parentNode || null;
+		this.rawAttrs = rawAttrs;
+		this.parentNode = parentNode;
 		this.childNodes = [];
+		let keyAttrs = {} as KeyAttributes
+		for (let attMatch; attMatch = kIdClassAttributePattern.exec(rawAttrs);) {
+			keyAttrs[attMatch[2]] = attMatch[4] || attMatch[5] || attMatch[6];
+		}
 		if (keyAttrs.id) {
 			this.id = keyAttrs.id;
 		}
@@ -509,10 +512,9 @@ export class HTMLElement extends Node {
 			return this._rawAttrs;
 		const attrs = {} as RawAttributes;
 		if (this.rawAttrs) {
-			const re = /\b([a-z][a-z0-9\-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/ig;
 			let match: RegExpExecArray;
-			while (match = re.exec(this.rawAttrs)) {
-				attrs[match[1]] = match[2] || match[3] || match[4] || "";
+			while (match = kAttributePattern.exec(this.rawAttrs)) {
+				attrs[match[1]] = match[4] || match[5] || match[6] || "";
 			}
 		}
 		this._rawAttrs = attrs;
@@ -794,8 +796,9 @@ export class Matcher {
 }
 
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
-const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)((\s+[a-z-]*(=["'](.*?)["'])?)*)\s*(\/?)>/ig;
-const kAttributePattern = /(^|\s)(id|class)\s*=\s*("([^"]+)"|'([^']+)'|(\S+))/ig;
+const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)((\s+[a-z][-.:0-9_a-z]*(\s*=\s*("[^"]*"|'([^']*')|([^\s\/>]+)))?)*)\s*(\/?)>/ig;
+const kIdClassAttributePattern = /(^|\s)(id|class)\s*=\s*("([^"]+)"|'([^']+)'|(\S+))/ig;
+const kAttributePattern = /([a-z][-.:0-9_a-z]*)(\s*=\s*("([^"]*)"|'([^']*)'|(\S+)))?/ig
 const kSelfClosingElements = {
 	area: true,
 	base: true,
@@ -850,7 +853,7 @@ export function parse(data: string, options?: {
 	pre?: boolean;
 	comment?: boolean;
 }) {
-	const root = new HTMLElement(null, {}) as HTMLElement & { valid: boolean; };;
+	const root = new HTMLElement(null) as HTMLElement & { valid: boolean; };;
 	let currentParent: HTMLElement = root;
 	const stack: HTMLElement[] = [root];
 	let lastTextPos = -1;
@@ -878,19 +881,14 @@ export function parse(data: string, options?: {
 			match[2] = match[2].toLowerCase();
 		if (!match[1]) {
 			// not </ tags
-			let attrs = {};
-			for (let attMatch; attMatch = kAttributePattern.exec(match[3]);) {
-				attrs[attMatch[2]] = attMatch[4] || attMatch[5] || attMatch[6];
-			}
-
-			if (!match[7] && kElementsClosedByOpening[currentParent.tagName]) {
+			if (!match[9] && kElementsClosedByOpening[currentParent.tagName]) {
 				if (kElementsClosedByOpening[currentParent.tagName][match[2]]) {
 					stack.pop();
 					currentParent = arr_back(stack);
 				}
 			}
 			currentParent = currentParent.appendChild(
-				new HTMLElement(match[2], attrs, match[3]));
+				new HTMLElement(match[2], match[3].trim()));
 			stack.push(currentParent);
 			if (kBlockTextElements[match[2]]) {
 				// a little test to find next </script> or </style> ...
@@ -916,7 +914,7 @@ export function parse(data: string, options?: {
 				}
 			}
 		}
-		if (match[1] || match[7] ||
+		if (match[1] || match[9] ||
 			kSelfClosingElements[match[2]]) {
 			// </ or /> or <br> etc.
 			while (true) {

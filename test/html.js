@@ -14,9 +14,9 @@ describe('HTML Parser', function () {
 	describe('Matcher', function () {
 		it('should match corrent elements', function () {
 			const matcher = new Matcher('#id .a a.b *.a.b .a.b * a');
-			const MatchesNothingButStarEl = new HTMLElement('_', {});
-			const withIdEl = new HTMLElement('p', { id: 'id' });
-			const withClassNameEl = new HTMLElement('a', { class: 'a b' });
+			const MatchesNothingButStarEl = new HTMLElement('_');
+			const withIdEl = new HTMLElement('p', "id='id'");
+			const withClassNameEl = new HTMLElement('a', "class='a b'");
 
 			matcher.advance(MatchesNothingButStarEl).should.not.be.ok; // #id
 			matcher.advance(withClassNameEl).should.not.be.ok; // #id
@@ -59,13 +59,13 @@ describe('HTML Parser', function () {
 
 			const root = parseHTML('<p id="id"><a class=\'cls\'>Hello</a><ul><li><li></ul><span></span></p>');
 
-			const p = new HTMLElement('p', { id: 'id' }, 'id="id"');
-			p.appendChild(new HTMLElement('a', { class: 'cls' }, 'class=\'cls\''))
+			const p = new HTMLElement('p', 'id="id"');
+			p.appendChild(new HTMLElement('a', 'class=\'cls\''))
 				.appendChild(new TextNode('Hello'));
-			const ul = p.appendChild(new HTMLElement('ul', {}, ''));
-			ul.appendChild(new HTMLElement('li', {}, ''));
-			ul.appendChild(new HTMLElement('li', {}, ''));
-			p.appendChild(new HTMLElement('span', {}, ''));
+			const ul = p.appendChild(new HTMLElement('ul'));
+			ul.appendChild(new HTMLElement('li'));
+			ul.appendChild(new HTMLElement('li'));
+			p.appendChild(new HTMLElement('span'));
 
 			root.firstChild.should.eql(p);
 		});
@@ -76,10 +76,10 @@ describe('HTML Parser', function () {
 				lowerCaseTagName: true
 			});
 
-			const div = new HTMLElement('div', {}, '');
-			const a = div.appendChild(new HTMLElement('a', {}, ''));
-			const img = a.appendChild(new HTMLElement('img', {}, ''));
-			const p = div.appendChild(new HTMLElement('p', {}, ''));
+			const div = new HTMLElement('div');
+			const a = div.appendChild(new HTMLElement('a'));
+			const img = a.appendChild(new HTMLElement('img'));
+			const p = div.appendChild(new HTMLElement('p'));
 
 			root.firstChild.should.eql(div);
 
@@ -89,10 +89,10 @@ describe('HTML Parser', function () {
 
 			const root = parseHTML('<div><a><img/></a><p></p></div>');
 
-			const div = new HTMLElement('div', {}, '');
-			const a = div.appendChild(new HTMLElement('a', {}, ''));
-			const img = a.appendChild(new HTMLElement('img', {}, ''));
-			const p = div.appendChild(new HTMLElement('p', {}, ''));
+			const div = new HTMLElement('div');
+			const a = div.appendChild(new HTMLElement('a'));
+			const img = a.appendChild(new HTMLElement('img'));
+			const p = div.appendChild(new HTMLElement('p'));
 
 			root.firstChild.should.eql(div);
 
@@ -109,8 +109,8 @@ describe('HTML Parser', function () {
 		it('should parse "<div><a><!-- my comment --></a></div>" and return root element without comments', function () {
 			const root = parseHTML('<div><a><!-- my comment --></a></div>');
 
-			const div = new HTMLElement('div', {}, '');
-			const a = div.appendChild(new HTMLElement('a', {}, ''));
+			const div = new HTMLElement('div');
+			const a = div.appendChild(new HTMLElement('a'));
 
 			root.firstChild.should.eql(div);
 		});
@@ -118,8 +118,8 @@ describe('HTML Parser', function () {
 		it('should parse "<div><a><!-- my comment --></a></div>" and return root element with comments', function () {
 			const root = parseHTML('<div><a><!-- my comment --></a></div>', { comment: true });
 
-			const div = new HTMLElement('div', {}, '');
-			const a = div.appendChild(new HTMLElement('a', {}, ''));
+			const div = new HTMLElement('div');
+			const a = div.appendChild(new HTMLElement('a'));
 			const comment = a.appendChild(new CommentNode(' my comment '));
 
 			root.firstChild.should.eql(div);
@@ -128,7 +128,7 @@ describe('HTML Parser', function () {
 		it('should not parse HTML inside comments', function () {
 			const root = parseHTML('<div><!--<a></a>--></div>', { comment: true });
 
-			const div = new HTMLElement('div', {}, '');
+			const div = new HTMLElement('div');
 			const comment = div.appendChild(new CommentNode('<a></a>'));
 
 			root.firstChild.should.eql(div);
@@ -138,9 +138,9 @@ describe('HTML Parser', function () {
 
 			const root = parseHTML('<picture><source srcset="/images/example-1.jpg 1200w, /images/example-2.jpg 1600w" sizes="100vw"><img src="/images/example.jpg" alt="Example"/></picture>');
 
-			const picture = new HTMLElement('picture', {}, '');
-			const source = picture.appendChild(new HTMLElement('source', {}, 'srcset="/images/example-1.jpg 1200w, /images/example-2.jpg 1600w" sizes="100vw"'));
-			const img = picture.appendChild(new HTMLElement('img', {}, 'src="/images/example.jpg" alt="Example"'));
+			const picture = new HTMLElement('picture');
+			const source = picture.appendChild(new HTMLElement('source', 'srcset="/images/example-1.jpg 1200w, /images/example-2.jpg 1600w" sizes="100vw"'));
+			const img = picture.appendChild(new HTMLElement('img', 'src="/images/example.jpg" alt="Example"'));
 
 			root.firstChild.should.eql(picture);
 
@@ -205,6 +205,14 @@ describe('HTML Parser', function () {
 		it('should parse "<div><h3>content<h3> <span> other <span></div>" (fix h3, span closing tag) very fast', function () {
 			const root = parseHTML(fs.readFileSync(__dirname + '/html/incomplete-script').toString());
 		});
+
+		// Test for values of attributes that include >
+
+		it('should parse "<div attr=">"></div>"', function () {
+			const root = parseHTML("<div attr='>'></div>")
+			root.firstChild.tagName.should.eql("div")
+			root.firstChild.attributes.attr.should.eql(">")
+		})
 
 	});
 
@@ -297,8 +305,8 @@ describe('HTML Parser', function () {
 			it('should remove whitespaces while preserving nodes with content', function () {
 				const root = parseHTML('<p> \r \n  \t <h5> 123 </h5></p>');
 
-				const p = new HTMLElement('p', {}, '');
-				p.appendChild(new HTMLElement('h5', {}, ''))
+				const p = new HTMLElement('p');
+				p.appendChild(new HTMLElement('h5'))
 					.appendChild(new TextNode('123'));
 
 				root.firstChild.removeWhitespace().should.eql(p);
@@ -400,22 +408,6 @@ describe('HTML Parser', function () {
 			it('should return just one element', function () {
 				const root = parseHTML('<time class="date">');
 				root.querySelectorAll('time,.date').should.eql([root.firstChild]);
-			});
-			it.skip('should return elements in order', function () {
-				const root = parseHTML('<img src=""><p>hello</p>');
-				const img = root.firstChild;
-				const p = root.childNodes[1];
-				const [f, s] = root.querySelectorAll('p,img');
-				f.should.eql(img);
-				s.should.eql(p);
-			});
-			it.skip('should query multiple nodes', function () {
-				const root = parseHTML('<a id="id"><div class="b"><span class="a b"></span><span></span><span></span></div></a>');
-				const a = root.firstChild;
-				const div = a.firstChild;
-				const span = div.firstChild;
-				root.querySelectorAll('#id span').should.eql(div.childNodes);
-				root.querySelectorAll('#id .b').should.eql([div, span]);
 			});
 		});
 
