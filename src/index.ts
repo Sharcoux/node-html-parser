@@ -6,22 +6,24 @@ export enum NodeType {
 	COMMENT_NODE = 8
 }
 
+export type Node = HTMLElement | TextNode | CommentNode
+
 /**
  * Node Class as base class for TextNode and HTMLElement.
  */
-export abstract class Node {
+export abstract class AbstractNode {
 	/** The node type.
 	 * * 1 for Elements
 	 * * 3 for Text Nodes
 	 * * 8 for Comments
 	 */
-	nodeType: NodeType;
+	abstract nodeType: NodeType;
 	/** Return the child nodes of this node */
 	childNodes = [] as Node[];
 	/** Return the unexcaped text content of this node */
-	text: string;
+	abstract text: string;
 	/** Return the raw text content of this node */
-	rawText: string;
+	abstract rawText: string;
 	/** Return the html representation of this node */
 	abstract toString(): string;
 }
@@ -29,7 +31,8 @@ export abstract class Node {
  * TextNode to contain a text element in DOM tree.
  * @param {string} value [description]
  */
-export class TextNode extends Node {
+export class TextNode extends AbstractNode {
+	rawText: string;
 	constructor(value: string) {
 		super();
 		this.rawText = value;
@@ -39,7 +42,7 @@ export class TextNode extends Node {
 	 * Node Type declaration.
 	 * @type {Number}
 	 */
-	nodeType = NodeType.TEXT_NODE;
+	nodeType = NodeType.TEXT_NODE as const;
 
 	/**
 	 * Get unescaped text value of current node and its children.
@@ -57,12 +60,13 @@ export class TextNode extends Node {
 		return /^(\s|&nbsp;)*$/.test(this.rawText);
 	}
 
-	toString() {
+	toString(): string {
 		return this.text;
 	}
 }
 
-export class CommentNode extends Node {
+export class CommentNode extends AbstractNode {
+	rawText: string;
 	constructor(value: string) {
 		super();
 		this.rawText = value;
@@ -72,7 +76,7 @@ export class CommentNode extends Node {
 	 * Node Type declaration.
 	 * @type {Number}
 	 */
-	nodeType = NodeType.COMMENT_NODE;
+	nodeType = NodeType.COMMENT_NODE as const;
 
 	/**
 	 * Get unescaped text value of current node and its children.
@@ -82,7 +86,7 @@ export class CommentNode extends Node {
 		return decode(this.rawText);
 	}
 
-	toString() {
+	toString(): string {
 		return `<!--${this.rawText}-->`;
 	}
 }
@@ -124,19 +128,19 @@ function arr_back<T>(arr: T[]) {
  *   structure provided (no parentNode, nextSibling,
  *   previousSibling etc).
  * @class HTMLElement
- * @extends {Node}
+ * @extends {AbstractNode}
  */
-export class HTMLElement extends Node {
+export class HTMLElement extends AbstractNode {
 	private _attrs: Attributes;
 	private _rawAttrs: RawAttributes;
 	/** This is a short hand for the id attribute of this node */
 	public id: string;
 	/** This is a short hand to get the list of the class names attribute of this node */
-	public classNames = [] as string[];
+	public classNames: string[] = [];
 	/**
 	 * Node Type declaration.
 	 */
-	public nodeType = NodeType.ELEMENT_NODE;
+	public nodeType = NodeType.ELEMENT_NODE as const;
 	/**
 	 * Creates an instance of HTMLElement.
 	 * @param [rawAttrs]	attributes in string
@@ -205,11 +209,11 @@ export class HTMLElement extends Node {
 	 * @return {string} structured text
 	 */
 	get structuredText() {
-		let currentBlock = [] as string[];
+		let currentBlock = [] as string[] & { prependWhitespace?: boolean };
 		const blocks = [currentBlock];
 		function dfs(node: Node) {
 			if (node.nodeType === NodeType.ELEMENT_NODE) {
-				if (kBlockElements[(node as HTMLElement).tagName]) {
+				if (kBlockElements[node.tagName]) {
 					if (currentBlock.length > 0) {
 						blocks.push(currentBlock = []);
 					}
@@ -221,14 +225,14 @@ export class HTMLElement extends Node {
 					node.childNodes.forEach(dfs);
 				}
 			} else if (node.nodeType === NodeType.TEXT_NODE) {
-				if ((node as TextNode).isWhitespace) {
+				if (node.isWhitespace) {
 					// Whitespace node, postponed output
-					(currentBlock as any).prependWhitespace = true;
+					currentBlock.prependWhitespace = true;
 				} else {
 					let text = node.text;
-					if ((currentBlock as any).prependWhitespace) {
+					if (currentBlock.prependWhitespace) {
 						text = ' ' + text;
-						(currentBlock as any).prependWhitespace = false;
+						currentBlock.prependWhitespace = false;
 					}
 					currentBlock.push(text);
 				}
@@ -243,7 +247,7 @@ export class HTMLElement extends Node {
 			.join('\n').replace(/\s+$/, '');	// trimRight;
 	}
 
-	public toString() {
+	public toString(): string {
 		const tag = this.tagName;
 		if (tag) {
 			const is_un_closed = /^meta$/i.test(tag);
@@ -270,13 +274,13 @@ export class HTMLElement extends Node {
 
 	/** Edit the HTML content of this node */
 	public set_content(content: string | Node | Node[]) {
-		if (content instanceof Node) {
+		if (content instanceof AbstractNode) {
 			content = [content];
 		} else if (typeof content == 'string') {
 			const r = parse(content);
 			content = r.childNodes.length ? r.childNodes : [new TextNode(content)];
 		}
-		this.childNodes = content as Node[];
+		this.childNodes = content;
 	}
 
 	/** Convert this node into its HTML representation. This is an alias to toString() method. */
@@ -293,7 +297,7 @@ export class HTMLElement extends Node {
 		for (let i = 0; i < this.childNodes.length; i++) {
 			const childNode = this.childNodes[i];
 			if (childNode.nodeType === NodeType.ELEMENT_NODE) {
-				(childNode as HTMLElement).trimRight(pattern);
+				childNode.trimRight(pattern);
 			} else {
 				const index = childNode.rawText.search(pattern);
 				if (index > -1) {
@@ -323,9 +327,9 @@ export class HTMLElement extends Node {
 			for (let i = 0; i < node.childNodes.length; i++) {
 				const childNode = node.childNodes[i];
 				if (childNode.nodeType === NodeType.ELEMENT_NODE) {
-					dfs(childNode as HTMLElement);
+					dfs(childNode);
 				} else if (childNode.nodeType === NodeType.TEXT_NODE) {
-					if (!(childNode as TextNode).isWhitespace)
+					if (!(childNode).isWhitespace)
 						write('#text');
 				}
 			}
@@ -344,11 +348,11 @@ export class HTMLElement extends Node {
 		for (let i = 0; i < this.childNodes.length; i++) {
 			const node = this.childNodes[i];
 			if (node.nodeType === NodeType.TEXT_NODE) {
-				if ((node as TextNode).isWhitespace)
+				if (node.isWhitespace)
 					continue;
 				node.rawText = node.rawText.trim();
 			} else if (node.nodeType === NodeType.ELEMENT_NODE) {
-				(node as HTMLElement).removeWhitespace();
+				node.removeWhitespace();
 			}
 			this.childNodes[o++] = node;
 		}
@@ -362,16 +366,16 @@ export class HTMLElement extends Node {
 	 * @param  {Matcher}        selector A Matcher instance
 	 * @return {HTMLElement[]}  matching elements
 	 */
-	public querySelectorAll(selector: string | Matcher) {
+	public querySelectorAll(selector: string | Matcher): HTMLElement[] {
 		let matcher: Matcher;
 		if (selector instanceof Matcher) {
 			matcher = selector;
 			matcher.reset();
 		} else {
 			if (selector.includes(',')) {
-				const selectors = selector.split(',') as string[];
+				const selectors = selector.split(',');
 				return Array.from(selectors.reduce((pre, cur) => {
-					const result = this.querySelectorAll(cur.trim()) as HTMLElement[];
+					const result = this.querySelectorAll(cur.trim());
 					return result.reduce((p, c) => {
 						return p.add(c);
 					}, pre);
@@ -394,7 +398,7 @@ export class HTMLElement extends Node {
 					}
 					if (state[2] = matcher.advance(el)) {
 						if (matcher.matched) {
-							res.push(el as HTMLElement);
+							res.push(el);
 							// no need to go further.
 							matcher.rewind();
 							stack.pop();
@@ -442,7 +446,7 @@ export class HTMLElement extends Node {
 					}
 					if (state[2] = matcher.advance(el)) {
 						if (matcher.matched) {
-							return el as HTMLElement;
+							return el;
 						}
 					}
 				}
@@ -524,9 +528,9 @@ export class HTMLElement extends Node {
 	/**
 	 * Set an attribute value to the HTMLElement
 	 * @param {string} key The attribute name
-	 * @param {string} value The value to set, or undefined to remove an attribute
+	 * @param {string | undefined} value The value to set, or undefined to remove an attribute
 	 */
-	setAttribute(key: string, value: string) {
+	setAttribute(key: string, value: string | undefined) {
 		//Update the id property
 		if (key==="id") {
 			this.id = value;
@@ -751,12 +755,12 @@ export class Matcher {
 				value: value || ""
 			}
 			source = source || "";
-			return pMatchFunctionCache[matcher] = obj as MatherFunction;
+			return pMatchFunctionCache[matcher] = obj;
 		});
 	}
 	/**
 	 * Trying to advance match pointer
-	 * @param  {HTMLElement} el element to make the match
+	 * @param  {Node} el element to make the match
 	 * @return {bool}           true when pointer advanced.
 	 */
 	advance(el: Node) {
@@ -857,7 +861,7 @@ export function parse(data: string, options?: {
 	let currentParent: HTMLElement = root;
 	const stack: HTMLElement[] = [root];
 	let lastTextPos = -1;
-	options = options || {} as any;
+	options = options || {};
 	let match: RegExpExecArray;
 	while (match = kMarkupPattern.exec(data)) {
 		if (lastTextPos > -1) {
@@ -946,7 +950,7 @@ export function parse(data: string, options?: {
 		// Handle each error elements.
 		const last = stack.pop();
 		const oneBefore = arr_back(stack);
-		if (last.parentNode && (last.parentNode as HTMLElement).parentNode) {
+		if (last.parentNode && last.parentNode instanceof HTMLElement && last.parentNode.parentNode) {
 			if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
 				// Pair error case <h3> <h3> handle : Fixes to <h3> </h3>
 				oneBefore.removeChild(last);
