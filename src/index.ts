@@ -21,9 +21,9 @@ export abstract class AbstractNode {
 	/** Return the child nodes of this node */
 	childNodes = [] as Node[];
 	/** Return the unexcaped text content of this node */
-	abstract text: string;
+	abstract get text(): string;
 	/** Return the raw text content of this node */
-	abstract rawText: string;
+	abstract get rawText(): string;
 	/** Return the html representation of this node */
 	abstract toString(): string;
 }
@@ -32,10 +32,14 @@ export abstract class AbstractNode {
  * @param {string} value [description]
  */
 export class TextNode extends AbstractNode {
-	rawText: string;
+	value: string
 	constructor(value: string) {
 		super();
-		this.rawText = value;
+		this.value = value;
+	}
+
+	get rawText() {
+		return this.value
 	}
 
 	/**
@@ -66,10 +70,10 @@ export class TextNode extends AbstractNode {
 }
 
 export class CommentNode extends AbstractNode {
-	rawText: string;
+	value: string
 	constructor(value: string) {
 		super();
-		this.rawText = value;
+		this.value = value;
 	}
 
 	/**
@@ -86,7 +90,11 @@ export class CommentNode extends AbstractNode {
 		return decode(this.rawText);
 	}
 
-	toString(): string {
+	get rawText() {
+		return this.value
+	}
+
+	toString() {
 		return `<!--${this.rawText}-->`;
 	}
 }
@@ -301,7 +309,7 @@ export class HTMLElement extends AbstractNode {
 			} else {
 				const index = childNode.rawText.search(pattern);
 				if (index > -1) {
-					childNode.rawText = childNode.rawText.substr(0, index);
+					childNode.value = childNode.rawText.substr(0, index);
 					// trim all following nodes.
 					this.childNodes.length = i + 1;
 				}
@@ -350,7 +358,7 @@ export class HTMLElement extends AbstractNode {
 			if (node.nodeType === NodeType.TEXT_NODE) {
 				if (node.isWhitespace)
 					continue;
-				node.rawText = node.rawText.trim();
+				node.value = node.rawText.trim();
 			} else if (node.nodeType === NodeType.ELEMENT_NODE) {
 				node.removeWhitespace();
 			}
@@ -532,24 +540,24 @@ export class HTMLElement extends AbstractNode {
 	 */
 	setAttribute(key: string, value: string | undefined) {
 		//Update the id property
-		if (key==="id") {
+		if (key === "id") {
 			this.id = value;
 		}
 		//Update the classNames
-		else if (key==="class") {
+		else if (key === "class") {
 			this.classNames = value.split(/\s+/);
 		}
 		//Update the attributes map
 		const attrs = this.attributes;
-		if(value===undefined) delete attrs[key];
-		else attrs[key] = value+'';
+		if (value === undefined) delete attrs[key];
+		else attrs[key] = value + '';
 		//Update the raw attributes
-		if(this._rawAttrs) {
-			if(value===undefined) delete this._rawAttrs[key];
-			else this._rawAttrs[key] = encode(value+'');
+		if (this._rawAttrs) {
+			if (value === undefined) delete this._rawAttrs[key];
+			else this._rawAttrs[key] = encode(value + '');
 		}
 		//Update rawString
-		this.rawAttrs = Object.keys(attrs).map(attr => attr+(attrs[attr]==='' ? '' : ('="'+encode(attrs[attr])+'"'))).join(' ');
+		this.rawAttrs = Object.keys(attrs).map(attr => attr + (attrs[attr] === '' ? '' : ('="' + encode(attrs[attr]) + '"'))).join(' ');
 	}
 
 	/**
@@ -566,17 +574,17 @@ export class HTMLElement extends AbstractNode {
 			this.classNames = attributes.class.split(/\s+/);
 		}
 		//Update the attributes map
-		if(this.attributes) {
+		if (this.attributes) {
 			Object.keys(this.attributes).forEach(key => delete this.attributes[key]);
-			Object.keys(attributes).forEach(key => this.attributes[key] = attributes[key]+'');
+			Object.keys(attributes).forEach(key => this.attributes[key] = attributes[key] + '');
 		}
 		//Update the raw attributes map
-		if(this.rawAttributes) {
+		if (this.rawAttributes) {
 			Object.keys(this.rawAttributes).forEach(key => delete this.rawAttributes[key]);
-			Object.keys(attributes).forEach(key => this.rawAttributes[key] = encode(attributes[key]+''));
+			Object.keys(attributes).forEach(key => this.rawAttributes[key] = encode(attributes[key] + ''));
 		}
 		//Update rawString
-		this.rawAttrs = Object.keys(attributes).map(attr => attr+(attributes[attr]==='' ? '' : ('="'+encode(attributes[attr]+'')+'"'))).join(' ');
+		this.rawAttrs = Object.keys(attributes).map(attr => attr + (attributes[attr] === '' ? '' : ('="' + encode(attributes[attr] + '') + '"'))).join(' ');
 	}
 }
 
@@ -942,7 +950,7 @@ export function parse(data: string, options?: {
 		}
 	}
 	root.valid = stack.length === 1;
-	if(lastTextPos===-1) {
+	if (lastTextPos === -1) {
 		root.appendChild(new TextNode(data))
 		return root
 	}
