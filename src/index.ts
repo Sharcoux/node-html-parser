@@ -560,6 +560,10 @@ export class HTMLElement extends AbstractNode {
 		this.rawAttrs = Object.keys(attrs).map(attr => attr + (attrs[attr] === '' ? '' : ('="' + encode(attrs[attr]) + '"'))).join(' ');
 	}
 
+	removeAttribute(key: string) {
+		this.setAttribute(key, undefined)
+	}
+
 	/**
 	 * Replace all the attributes of the HTMLElement by the provided attributes
 	 * @param {Attributes} attributes the new attribute set
