@@ -1,6 +1,6 @@
 # Node HTML Better Parser
 
-## Fork from Fast HTML Parser [![NPM version](https://badge.fury.io/js/node-html-parser.png)](http://badge.fury.io/js/node-html-parser) [![Build Status](https://travis-ci.org/taoqf/node-html-parser.svg?branch=master)](https://travis-ci.org/taoqf/node-html-parser)
+## Fork from Fast HTML Parser [![NPM version](https://badge.fury.io/js/node-html-parser.png)](http://badge.fury.io/js/node-html-parser)
 
 Fast HTML Parser is a _very fast_ HTML parser. Which will generate a simplified
 DOM tree, with basic element query support.
@@ -99,32 +99,33 @@ The root is actually a fictive node that contains the nodes found in the content
 
 ### properties
 
-| property name  | description                                                                                            |
-|----------------|--------------------------------------------------------------------------------------------------------|
-| text           | Get unescaped text value of current node and its children. Like `innerText`. (slow for the first time) |
-| tagName        | Get the tag name of the current element                                                                |
-| classNames     | Get the classes of the current element                                                                 |
-| parentNode     | Get the parent HTMLNode                                                                                |
-| rawText        | Get escpaed (as-it) text value of current node and its children. May have `&amp;` in it. (fast)        |
-| structuredText | Get structured Text                                                                                    |
-| structure      | Get DOM structure                                                                                      |
-| firstChild     | Get first child node                                                                                   |
-| lastChild      | Get last child node                                                                                    |
-| attributes     | Get attributes                                                                                         |
-| rawAttributes  | Get escaped (as-it) attributes                                                                         |
-| innerHTML      | Get innerHTML                                                                                          |
-| outerHTML      | Get outerHTML                                                                                          |
+| property name   | description                                                                                            |
+|-----------------|--------------------------------------------------------------------------------------------------------|
+| text            | Get unescaped text value of current node and its children. Like `innerText`. (slow for the first time) |
+| tagName         | Get the tag name of the current element                                                                |
+| classNames      | Get the classes of the current element                                                                 |
+| parentNode      | Get the parent HTMLNode                                                                                |
+| rawText         | Get escpaed (as-it) text value of current node and its children. May have `&amp;` in it. (fast)        |
+| structuredText  | Get structured Text                                                                                    |
+| structure       | Get DOM structure                                                                                      |
+| firstChild      | Get first child node                                                                                   |
+| lastChild       | Get last child node                                                                                    |
+| attributes      | Get attributes                                                                                         |
+| rawAttributes   | Get escaped (as-it) attributes                                                                         |
+| innerHTML       | Get innerHTML                                                                                          |
+| outerHTML       | Get outerHTML                                                                                          |
 
 ### methods
 
-| method                                          | parameters                                                                                                                                                                                                 | return                                                                            |
-|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| trimRight()                                     |                                                                                                                                                                                                            | Trim element from right (in block) after seeing pattern in a TextNode.            |
-| removeWhitespace()                              |                                                                                                                                                                                                            | Remove whitespaces in this sub tree.                                              |
-| querySelectorAll(selector: string)              |  * **selector**: CSS selector Note: only `tagName`, `#id`, `.class` selectors supported.                                                                                                                   | Query CSS selector to find matching nodes.                                        |
-| querySelector(selector: string)                 |  * **selector**: CSS selector Note: only `tagName`, `#id`, `.class` selectors supported. And not behave the same as standard `querySelectorAll()` as it will _stop_ searching sub tree after find a match. | Query CSS selector to find matching node.                                         |
-| appendChild(node: Node)                         |  * **node**: HTMLElement or Text node                                                                                                                                                                      | Append a child node to childNodes                                                 |
-| setAttribute(key: string, value: string \| null) |  * **key**: The HTML attribute key  * **value**: The HTML attribute name                                                                                                                                   | Set `value` to `key` attribute. If `value` is null, remove the attribute instead. |
-| setAttributes(attributes: Attributes)           |  * **attributes**: An object containing the `key: value` pairs we expect for this node                                                                                                                     | Replace all the current attributes by the provided attribute set.                 |
-| toString()                                      |                                                                                                                                                                                                            | Same as outerHTML                                                 |
+| method                                            | parameters                                                                                                                                                                                                 | return                                                                            |
+|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| trimRight()                                       |                                                                                                                                                                                                            | Trim element from right (in block) after seeing pattern in a TextNode.            |
+| removeWhitespace()                                |                                                                                                                                                                                                            | Remove whitespaces in this sub tree.                                              |
+| querySelectorAll(selector: string)                |  * **selector**: CSS selector Note: only `tagName`, `#id`, `.class` selectors supported.                                                                                                                   | Query CSS selector to find matching nodes.                                        |
+| querySelector(selector: string)                   |  * **selector**: CSS selector Note: only `tagName`, `#id`, `.class` selectors supported. And not behave the same as standard `querySelectorAll()` as it will _stop_ searching sub tree after find a match. | Query CSS selector to find matching node.                                         |
+| appendChild(node: Node)                           |  * **node**: HTMLElement or Text node                                                                                                                                                                      | Append a child node to childNodes                                                 |
+| setAttribute(key: string, value: string \| null)  |  * **key**: The HTML attribute key  * **value**: The HTML attribute name                                                                                                                                   | Set `value` to `key` attribute. If `value` is null, remove the attribute instead. |
+| setAttributes(attributes: Attributes)             |  * **attributes**: An object containing the `key: value` pairs we expect for this node                                                                                                                     | Replace all the current attributes by the provided attribute set.                 |
+| removeAttributes(key: string)                     |  * **key**: The HTML attribute key                                                                                                                                                                         | Remove the attribute denoted by `key`.                                            |
+| toString()                                        |                                                                                                                                                                                                            | Same as outerHTML                                                                 |
 | set_content(content: string \| Node \| Node[])    | * **content**: The new content for this node                                                                                                                                                               | Set content for this node. **Notice**: Do not set content of the **root** node.   |
