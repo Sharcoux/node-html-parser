@@ -200,6 +200,13 @@ describe('HTML Parser', function () {
 
 		});
 
+		// Should parse self closing tags.
+
+		it('should parse self closing tag', function () {
+			parseHTML("<img src=\"test.jpg\">").toString().should.eql("<img src=\"test.jpg\" />");
+			parseHTML("<meta charset=\"utf-8\" \>").toString().should.eql("<meta charset=\"utf-8\" />");
+		});
+
 		// Test for broken tags. <h3>something<h3>
 
 		it('should parse "<div><h3>content<h3> <span> other <span></div>" (fix h3, span closing tag) very fast', function () {
@@ -372,7 +379,7 @@ describe('HTML Parser', function () {
 		describe('#setAttributes', function () {
 			it('should replace all attributes of the element', function () {
 				const root = parseHTML('<p a=12 data-id="!$$&amp;" yAz=\'1\' class="" disabled></p>');
-				root.firstChild.setAttributes({c: 12});
+				root.firstChild.setAttributes({ c: 12 });
 				root.firstChild.attributes.should.eql({
 					'c': '12',
 				});
@@ -489,6 +496,15 @@ describe('HTML Parser', function () {
 			const root = parseHTML('<my-new-widget></my-new-widget>');
 
 			root.firstChild.tagName.should.eql('my-new-widget');
+		});
+	});
+
+	describe('Font family', function () {
+		it('parse font-family style attribute', function () {
+
+			const root = parseHTML(`<div style='font-family: "Nunito", "Arial", sans-serif'></div>`);
+
+			root.firstChild.attributes.style.should.eql('font-family: "Nunito", "Arial", sans-serif');
 		});
 	});
 });

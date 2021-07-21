@@ -258,12 +258,9 @@ export class HTMLElement extends AbstractNode {
 	public toString(): string {
 		const tag = this.tagName;
 		if (tag) {
-			const is_un_closed = /^meta$/i.test(tag);
-			const is_self_closed = /^(img|br|hr|area|base|input|doctype|link)$/i.test(tag);
+			const is_self_closed = /^(img|br|hr|area|base|input|doctype|link|meta)$/i.test(tag);
 			const attrs = this.rawAttrs ? ' ' + this.rawAttrs : '';
-			if (is_un_closed) {
-				return `<${tag}${attrs}>`;
-			} else if (is_self_closed) {
+			if (is_self_closed) {
 				return `<${tag}${attrs} />`;
 			} else {
 				return `<${tag}${attrs}>${this.innerHTML}</${tag}>`;
