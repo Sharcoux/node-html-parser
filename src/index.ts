@@ -427,9 +427,9 @@ export class HTMLElement extends AbstractNode {
 	 * Query CSS Selector to find matching node.
 	 * @param  {string}         selector Simplified CSS selector
 	 * @param  {Matcher}        selector A Matcher instance
-	 * @return {HTMLElement}    matching node
+	 * @return {HTMLElement | null}    matching node or null if not found
 	 */
-	public querySelector(selector: string | Matcher) {
+	public querySelector(selector: string | Matcher): HTMLElement | null {
 		let matcher: Matcher;
 		if (selector instanceof Matcher) {
 			matcher = selector;
