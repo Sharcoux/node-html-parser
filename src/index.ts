@@ -1,4 +1,4 @@
-import { decode, encode } from 'he';
+import { decode, encode } from 'html-entities';
 
 export enum NodeType {
 	ELEMENT_NODE = 1,

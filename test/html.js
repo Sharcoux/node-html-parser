@@ -372,7 +372,7 @@ describe('HTML Parser', function () {
 					'a': '12',
 					'data-id': "!$$&"
 				});
-				root.firstChild.toString().should.eql('<p a="12" data-id="!$$&#x26;"></p>');
+				root.firstChild.toString().should.eql('<p a="12" data-id="!$$&amp;"></p>');
 			});
 		});
 

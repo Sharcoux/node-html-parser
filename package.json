@@ -25,11 +25,9 @@
 	],
 	"license": "MIT",
 	"dependencies": {
-		"he": "^1.2.0"
+		"html-entities": "^2.3.2"
 	},
 	"devDependencies": {
-		"@types/entities": "latest",
-		"@types/he": "latest",
 		"@types/node": "latest",
 		"blanket": "latest",
 		"del-cli": "latest",
