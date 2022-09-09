@@ -65,7 +65,7 @@ export class TextNode extends AbstractNode {
 	}
 
 	toString(): string {
-		return this.text;
+		return this.rawText;
 	}
 }
 
