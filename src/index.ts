@@ -985,3 +985,62 @@ export function parse(data: string, options?: {
 	});
 	return root;
 }
+
+const blockTags = [
+  'html',
+  'body',
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'canvas',
+  'dd',
+  'div',
+  'dl',
+  'dt',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'header',
+  'hr',
+  'li',
+  'main',
+  'nav',
+  'noscript',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'tfoot',
+  'table',
+  'tbody',
+  'ul',
+  'video',
+  'th',
+  'td',
+  'tr',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+] as const
+type BlockTag = typeof blockTags[number]
+
+/**
+ * Is the provided node a block element
+ * @param node The node to consider
+ * @returns true if the tagname of this node is of type block (p, ol, ul, h1, etc)
+ */
+export function isBlock(node: { nodeType: NodeType; tagName: string }) {
+  return (
+    node.nodeType === NodeType.ELEMENT_NODE &&
+    node.tagName &&
+    (blockTags.includes(node.tagName.toLowerCase() as BlockTag) ||
+      // We want code tags to render as blocks in our editor
+      node.tagName.toLowerCase() === 'code')
+  )
+}

@@ -77,13 +77,13 @@ __________________________
 
 ## API
 
-* ## parse(data[, options])
+## parse(data[, options])
 
 Parse given data, and return root of the generated DOM.
 The root is actually a fictive node that contains the nodes found in the content provided. The content can be found in `root.childNodes`, or accessed with `root.firstChild` if the parsed HTML has a root node (think about `<b>siblings</b> <i>nodes</i>`).
 
-- **data**, data to parse
-- **options**, parse options
+  - **data**, data to parse
+  - **options**, parse options
 
   ```js
   {
@@ -95,7 +95,11 @@ The root is actually a fictive node that contains the nodes found in the content
   }
   ```
 
-* ## HTMLElement
+## isBlock(node: HTMLElement)
+
+Returns weither the provided node is a block. A node is considered a block is it has a tag represented as block instead of inline in html specs.
+
+## HTMLElement
 
 ### properties
 

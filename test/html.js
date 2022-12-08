@@ -3,6 +3,7 @@ const fs = require('fs');
 const util = require('util');
 
 const HTMLParser = require('../dist');
+const { parse } = require('path');
 
 describe('HTML Parser', function () {
 
@@ -364,6 +365,13 @@ describe('HTML Parser', function () {
 				root.firstChild.setAttribute('required', '');
 				root.firstChild.toString().should.eql('<p a="12" b="13" required></p>');
 			});
+			it('should add an attribute with a new line to the element', function () {
+				const root = parseHTML('<p></p>');
+				root.firstChild.setAttribute('b', "test\ntest");
+				parseHTML(root.innerHTML).firstChild.attributes.should.eql({
+					'b': 'test\ntest',
+				});
+			});
 			it('should remove an attribute from the element', function () {
 				const root = parseHTML('<p a=12 b=13 c=14 data-id="!$$&amp;"></p>');
 				root.firstChild.setAttribute('b', undefined);
@@ -470,6 +478,12 @@ describe('HTML Parser', function () {
 		it('#toString() should return comments when specified', function () {
 			const html = '<!----><p><!-- my comment --></p>';
 			const root = parseHTML(html, { comment: true });
+			root.toString().should.eql(html);
+		});
+
+		it('#toString() should return encoded html entities', function () {
+			const html = '<p>&lt;</p>';
+			const root = parseHTML(html);
 			root.toString().should.eql(html);
 		});
 	});
