@@ -1039,8 +1039,6 @@ export function isBlock(node: { nodeType: NodeType; tagName: string }) {
   return (
     node.nodeType === NodeType.ELEMENT_NODE &&
     node.tagName &&
-    (blockTags.includes(node.tagName.toLowerCase() as BlockTag) ||
-      // We want code tags to render as blocks in our editor
-      node.tagName.toLowerCase() === 'code')
+    blockTags.includes(node.tagName.toLowerCase() as BlockTag)
   )
 }
