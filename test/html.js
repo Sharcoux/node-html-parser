@@ -322,6 +322,14 @@ describe('HTML Parser', function () {
 			});
 		});
 
+		describe('#remove()', function () {
+			it('should remove the current node', function () {
+				const root = parseHTML('<div><p></p></div>');
+				root.firstChild.firstChild.remove()
+				root.firstChild.outerHTML.should.eql('<div></div>');
+			});
+		});
+
 		describe('#removeWhitespace()', function () {
 			it('should remove whitespaces while preserving nodes with content', function () {
 				const root = parseHTML('<p> \r \n  \t <h5> 123 </h5></p>');

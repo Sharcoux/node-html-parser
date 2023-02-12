@@ -494,6 +494,15 @@ export class HTMLElement extends AbstractNode {
 	}
 
 	/**
+	 * Remove this node from its parent if any
+	 * @return {Node}      node removed
+	 */
+	public remove() {
+		if(this.parentNode instanceof HTMLElement) this.parentNode.removeChild(this)
+		return this
+	}
+
+	/**
 	 * Get first child node
 	 * @return {Node} first child node
 	 */
