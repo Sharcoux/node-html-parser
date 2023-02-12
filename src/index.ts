@@ -179,6 +179,7 @@ export class HTMLElement extends AbstractNode {
 		this.childNodes = this.childNodes.filter((child) => {
 			return (child !== node);
 		});
+		if(node instanceof HTMLElement) node.parentNode = null
 	}
 	/**
 	 * Exchanges given child with new child
@@ -186,14 +187,11 @@ export class HTMLElement extends AbstractNode {
 	 * @param {HTMLElement} newNode     new node
 	 */
 	public exchangeChild(oldNode: Node, newNode: Node) {
-		let idx = -1;
-		for (let i = 0; i < this.childNodes.length; i++) {
-			if (this.childNodes[i] === oldNode) {
-				idx = i;
-				break;
-			}
+		const index = this.childNodes.findIndex(node => node === oldNode)
+		if(index>=0){
+			this.childNodes[index] = newNode
+			if(oldNode instanceof HTMLElement) oldNode.parentNode = null
 		}
-		this.childNodes[idx] = newNode;
 	}
 	/**
 	 * Get escpaed (as-it) text value of current node and its children.
