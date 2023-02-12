@@ -309,6 +309,19 @@ describe('HTML Parser', function () {
 
 	describe('HTMLElement', function () {
 
+		describe('#prependChild()', function () {
+			it('should add children in the correct order', function () {
+				const root = parseHTML('<p></p>');
+
+				const p = root.firstChild;
+				p.prependChild(new TextNode('3'));
+				p.prependChild(new TextNode('2'));
+				p.prependChild(new TextNode('1'));
+
+				root.firstChild.text.should.eql('123');
+			});
+		});
+
 		describe('#removeWhitespace()', function () {
 			it('should remove whitespaces while preserving nodes with content', function () {
 				const root = parseHTML('<p> \r \n  \t <h5> 123 </h5></p>');

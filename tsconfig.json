@@ -18,7 +18,6 @@
 		"allowUnusedLabels": false,
 		"alwaysStrict": true,
 		"baseUrl": "",
-		"charset": "utf8",
 		"declaration": true,
 		"inlineSourceMap": false,
 		"esModuleInterop": true,
@@ -57,7 +56,6 @@
 		"skipLibCheck": true,
 		"stripInternal": false,
 		"suppressExcessPropertyErrors": false,
-		"suppressImplicitAnyIndexErrors": true,
 		"traceResolution": false,
 		"typeRoots": [],
 		"types": [

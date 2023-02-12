@@ -162,7 +162,7 @@ export class HTMLElement extends AbstractNode {
 		this.childNodes = [];
 		let keyAttrs = {} as KeyAttributes
 		for (let attMatch; attMatch = kIdClassAttributePattern.exec(rawAttrs);) {
-			keyAttrs[attMatch[2]] = attMatch[4] || attMatch[5] || attMatch[6];
+			keyAttrs[attMatch[2] as keyof typeof keyAttrs] = attMatch[4] || attMatch[5] || attMatch[6];
 		}
 		if (keyAttrs.id) {
 			this.id = keyAttrs.id;
@@ -221,7 +221,7 @@ export class HTMLElement extends AbstractNode {
 		const blocks = [currentBlock];
 		function dfs(node: Node) {
 			if (node.nodeType === NodeType.ELEMENT_NODE) {
-				if (kBlockElements[node.tagName]) {
+				if (kBlockElements[node.tagName as keyof typeof kBlockElements]) {
 					if (currentBlock.length > 0) {
 						blocks.push(currentBlock = []);
 					}
@@ -473,8 +473,20 @@ export class HTMLElement extends AbstractNode {
 	 * @return {Node}      node appended
 	 */
 	public appendChild<T extends Node = Node>(node: T) {
-		// node.parentNode = this;
 		this.childNodes.push(node);
+		if (node instanceof HTMLElement) {
+			node.parentNode = this;
+		}
+		return node;
+	}
+
+	/**
+	 * Append a child node to childNodes
+	 * @param  {Node} node node to prepend
+	 * @return {Node}      node prepended
+	 */
+	public prependChild<T extends Node = Node>(node: T) {
+		this.childNodes.unshift(node);
 		if (node instanceof HTMLElement) {
 			node.parentNode = this;
 		}
@@ -757,7 +769,7 @@ export class Matcher {
 			source += 'return true;';//5
 			function_name += '5';
 			let obj = {
-				func: functionCache[function_name],
+				func: functionCache[function_name as keyof typeof functionCache],
 				tagName: tagName || "",
 				classes: classes || "",
 				attr_key: attr_key || "",
@@ -894,8 +906,8 @@ export function parse(data: string, options?: {
 			match[2] = match[2].toLowerCase();
 		if (!match[1]) {
 			// not </ tags
-			if (!match[9] && kElementsClosedByOpening[currentParent.tagName]) {
-				if (kElementsClosedByOpening[currentParent.tagName][match[2]]) {
+			if (!match[9] && kElementsClosedByOpening[currentParent.tagName as keyof typeof kElementsClosedByOpening]) {
+				if (kElementsClosedByOpening[currentParent.tagName as 'li'][match[2] as 'li']) {
 					stack.pop();
 					currentParent = arr_back(stack);
 				}
@@ -903,11 +915,11 @@ export function parse(data: string, options?: {
 			currentParent = currentParent.appendChild(
 				new HTMLElement(match[2], match[3].trim()));
 			stack.push(currentParent);
-			if (kBlockTextElements[match[2]]) {
+			if (kBlockTextElements[match[2] as keyof typeof kBlockTextElements]) {
 				// a little test to find next </script> or </style> ...
 				let closeMarkup = '</' + match[2] + '>';
 				let index = data.indexOf(closeMarkup, kMarkupPattern.lastIndex);
-				if (options[match[2]]) {
+				if (options[match[2] as keyof typeof options]) {
 					let text: string;
 					if (index == -1) {
 						// there is no matching ending for the text element.
@@ -928,7 +940,7 @@ export function parse(data: string, options?: {
 			}
 		}
 		if (match[1] || match[9] ||
-			kSelfClosingElements[match[2]]) {
+			kSelfClosingElements[match[2] as keyof typeof kSelfClosingElements]) {
 			// </ or /> or <br> etc.
 			while (true) {
 				if (currentParent.tagName == match[2]) {
@@ -937,8 +949,8 @@ export function parse(data: string, options?: {
 					break;
 				} else {
 					// Trying to close current tag, and move on
-					if (kElementsClosedByClosing[currentParent.tagName]) {
-						if (kElementsClosedByClosing[currentParent.tagName][match[2]]) {
+					if (kElementsClosedByClosing[currentParent.tagName as keyof typeof kElementsClosedByClosing]) {
+						if (kElementsClosedByClosing[currentParent.tagName as 'li'][match[2] as 'ul']) {
 							stack.pop();
 							currentParent = arr_back(stack);
 							continue;
