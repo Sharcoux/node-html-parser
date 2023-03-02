@@ -888,20 +888,20 @@ export function parse(data: string, options?: {
 	const root = new HTMLElement(null) as HTMLElement & { valid: boolean; };;
 	let currentParent: HTMLElement = root;
 	const stack: HTMLElement[] = [root];
-	let lastTextPos = -1;
+	let lastTextPos = 0;
 	options = options || {};
 	let match: RegExpExecArray;
 	while (match = kMarkupPattern.exec(data)) {
-		if (lastTextPos > -1) {
-			if (lastTextPos + match[0].length < kMarkupPattern.lastIndex) {
-				// if has content
-				const text = data.substring(lastTextPos, kMarkupPattern.lastIndex - match[0].length);
-				currentParent.appendChild(new TextNode(text));
-			}
+		// Add the text from the last tag or the start of the string until the new tag found (if not empty)
+		if (lastTextPos + match[0].length < kMarkupPattern.lastIndex) {
+			const text = data.substring(lastTextPos, kMarkupPattern.lastIndex - match[0].length);
+			currentParent.appendChild(new TextNode(text));
 		}
+
 		lastTextPos = kMarkupPattern.lastIndex;
+
+		// Add Comment nodes
 		if (match[0][1] == '!') {
-			// this is a comment
 			if (options.comment) {
 				// Only keep what is in between <!-- and -->
 				const text = data.substring(lastTextPos - 3, lastTextPos - match[0].length + 4);
@@ -911,8 +911,9 @@ export function parse(data: string, options?: {
 		}
 		if (options.lowerCaseTagName)
 			match[2] = match[2].toLowerCase();
+
+		// Handle opening tags (not </ tags)
 		if (!match[1]) {
-			// not </ tags
 			if (!match[9] && kElementsClosedByOpening[currentParent.tagName as keyof typeof kElementsClosedByOpening]) {
 				if (kElementsClosedByOpening[currentParent.tagName as 'li'][match[2] as 'li']) {
 					stack.pop();
@@ -946,6 +947,8 @@ export function parse(data: string, options?: {
 				}
 			}
 		}
+
+		// Handle self closing tags
 		if (match[1] || match[9] ||
 			kSelfClosingElements[match[2] as keyof typeof kSelfClosingElements]) {
 			// </ or /> or <br> etc.
@@ -969,11 +972,14 @@ export function parse(data: string, options?: {
 			}
 		}
 	}
-	root.valid = stack.length === 1;
-	if (lastTextPos === -1) {
-		root.appendChild(new TextNode(data))
-		return root
+
+	// Add the last characters as TextNode if they are remaining characters outside any tag
+	if (lastTextPos < data.length) {
+		root.appendChild(new TextNode(data.substring(lastTextPos)))
 	}
+
+	// Handle malformed html
+	root.valid = stack.length === 1;
 	while (stack.length > 1) {
 		// Handle each error elements.
 		const last = stack.pop();
@@ -997,11 +1003,14 @@ export function parse(data: string, options?: {
 			// If it's final element just skip.
 		}
 	}
+
+	// Mark root children as orphans, as the root is not a real element
 	root.childNodes.forEach((node) => {
 		if (node instanceof HTMLElement) {
 			node.parentNode = null;
 		}
 	});
+
 	return root;
 }
 

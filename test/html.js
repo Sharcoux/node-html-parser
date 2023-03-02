@@ -99,6 +99,16 @@ describe('HTML Parser', function () {
 
 		});
 
+		it('should parse text node and return root element', function () {
+			const root = parseHTML('this is text<br />');
+			root.outerHTML.should.eql('this is text<br />');
+		});
+
+		it('should parse text with 2 br tags and return root element', function () {
+			const root = parseHTML('this is text<br /> with 2<br />');
+			root.outerHTML.should.eql('this is text<br /> with 2<br />');
+		});
+
 		it('should parse text nodes and return a root element containing the text node as only child', function () {
 			const root = parseHTML('text node');
 
