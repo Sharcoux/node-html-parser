@@ -99,6 +99,12 @@ describe('HTML Parser', function () {
 
 		});
 
+		it('should parse "<tr><th></th></tr>" and return root element', function () {
+			const a = `<tr><th></th></tr>`
+			const root = parseHTML(a);
+			root.firstChild.toString().should.eql(a);
+		});
+
 		it('should parse text node and return root element', function () {
 			const root = parseHTML('this is text<br />');
 			root.outerHTML.should.eql('this is text<br />');
@@ -487,6 +493,28 @@ describe('HTML Parser', function () {
 			it('set content text', function () {
 				const root = parseHTML('<div></div>');
 				root.childNodes[0].set_content('abc');
+				root.toString().should.eql('<div>abc</div>');
+			});
+		});
+		describe('#set innerHTML', function () {
+			it('set content string', function () {
+				const root = parseHTML('<div></div>');
+				root.childNodes[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.toString().should.eql('<div><span><div>abc</div>bla</span></div>');
+			});
+			it('set content nodes', function () {
+				const root = parseHTML('<div></div>');
+				root.childNodes[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.toString().should.eql('<div><span><div>abc</div>bla</span></div>');
+			});
+			it('set content node', function () {
+				const root = parseHTML('<div></div>');
+				root.childNodes[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.toString().should.eql('<div><span><div>abc</div>bla</span></div>');
+			});
+			it('set content text', function () {
+				const root = parseHTML('<div></div>');
+				root.childNodes[0].innerHTML='abc';
 				root.toString().should.eql('<div>abc</div>');
 			});
 		});

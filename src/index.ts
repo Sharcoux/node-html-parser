@@ -1,5 +1,7 @@
 import { decode, encode } from 'html-entities';
 
+let debug = true
+
 export enum NodeType {
 	ELEMENT_NODE = 1,
 	TEXT_NODE = 3,
@@ -7,6 +9,14 @@ export enum NodeType {
 }
 
 export type Node = HTMLElement | TextNode | CommentNode
+
+export type ParsingOptions = {
+	lowerCaseTagName?: boolean;
+	script?: boolean;
+	style?: boolean;
+	pre?: boolean;
+	comment?: boolean;
+}
 
 /**
  * Node Class as base class for TextNode and HTMLElement.
@@ -20,12 +30,28 @@ export abstract class AbstractNode {
 	abstract nodeType: NodeType;
 	/** Return the child nodes of this node */
 	childNodes = [] as Node[];
-	/** Return the unexcaped text content of this node */
-	abstract get text(): string;
+	/**
+	 * Get unescaped text value of current node and its children.
+	 * @return {string} text content
+	 */
+	get text() {
+		return decode(this.rawText);
+	}
 	/** Return the raw text content of this node */
 	abstract get rawText(): string;
 	/** Return the html representation of this node */
 	abstract toString(): string;
+	/** Return the parent node or null if this node is the root of the tree */
+	public parentNode: HTMLElement | null;
+
+	/**
+	 * Remove this node from its parent if any
+	 * @return {Node}      node removed
+	 */
+	public remove() {
+		if(this.parentNode) this.parentNode.removeChild(this as unknown as Node)
+		return this
+	}
 }
 /**
  * TextNode to contain a text element in DOM tree.
@@ -47,14 +73,6 @@ export class TextNode extends AbstractNode {
 	 * @type {Number}
 	 */
 	nodeType = NodeType.TEXT_NODE as const;
-
-	/**
-	 * Get unescaped text value of current node and its children.
-	 * @return {string} text content
-	 */
-	get text() {
-		return decode(this.rawText);
-	}
 
 	/**
 	 * Detect if the node contains only white space.
@@ -81,14 +99,6 @@ export class CommentNode extends AbstractNode {
 	 * @type {Number}
 	 */
 	nodeType = NodeType.COMMENT_NODE as const;
-
-	/**
-	 * Get unescaped text value of current node and its children.
-	 * @return {string} text content
-	 */
-	get text() {
-		return decode(this.rawText);
-	}
 
 	get rawText() {
 		return this.value
@@ -155,7 +165,7 @@ export class HTMLElement extends AbstractNode {
 	 *
 	 * @memberof HTMLElement
 	 */
-	constructor(public tagName: string, private rawAttrs = '', public parentNode = null as Node) {
+	constructor(public tagName: string, private rawAttrs = '', parentNode = null as HTMLElement) {
 		super();
 		this.rawAttrs = rawAttrs;
 		this.parentNode = parentNode;
@@ -202,13 +212,6 @@ export class HTMLElement extends AbstractNode {
 		for (let i = 0; i < this.childNodes.length; i++)
 			res += this.childNodes[i].rawText;
 		return res;
-	}
-	/**
-	 * Get unescaped text value of current node and its children.
-	 * @return {string} text content
-	 */
-	get text() {
-		return decode(this.rawText);
 	}
 	/**
 	 * Get structured Text (with '\n' etc.)
@@ -273,6 +276,12 @@ export class HTMLElement extends AbstractNode {
 		return this.childNodes.map((child) => {
 			return child.toString();
 		}).join('');
+	}
+
+	set innerHTML(content: string) {
+		const doc = parse(content)
+		this.childNodes.forEach(node => node.remove())
+		doc.childNodes.forEach(node => this.appendChild(node))
 	}
 
 	/** Edit the HTML content of this node */
@@ -489,15 +498,6 @@ export class HTMLElement extends AbstractNode {
 			node.parentNode = this;
 		}
 		return node;
-	}
-
-	/**
-	 * Remove this node from its parent if any
-	 * @return {Node}      node removed
-	 */
-	public remove() {
-		if(this.parentNode instanceof HTMLElement) this.parentNode.removeChild(this)
-		return this
 	}
 
 	/**
@@ -878,13 +878,7 @@ const kBlockTextElements = {
  * @param  {string} data      html
  * @return {HTMLElement}      root fictive element. The parsed HTML can be found inside the root.childNodes property
  */
-export function parse(data: string, options?: {
-	lowerCaseTagName?: boolean;
-	script?: boolean;
-	style?: boolean;
-	pre?: boolean;
-	comment?: boolean;
-}) {
+export function parse(data: string, options?: ParsingOptions) {
 	const root = new HTMLElement(null) as HTMLElement & { valid: boolean; };;
 	let currentParent: HTMLElement = root;
 	const stack: HTMLElement[] = [root];
@@ -892,9 +886,11 @@ export function parse(data: string, options?: {
 	options = options || {};
 	let match: RegExpExecArray;
 	while (match = kMarkupPattern.exec(data)) {
+		if(debug) console.log('match', match[0])
 		// Add the text from the last tag or the start of the string until the new tag found (if not empty)
 		if (lastTextPos + match[0].length < kMarkupPattern.lastIndex) {
 			const text = data.substring(lastTextPos, kMarkupPattern.lastIndex - match[0].length);
+			if(debug) console.log('text node', text)
 			currentParent.appendChild(new TextNode(text));
 		}
 
@@ -905,6 +901,7 @@ export function parse(data: string, options?: {
 			if (options.comment) {
 				// Only keep what is in between <!-- and -->
 				const text = data.substring(lastTextPos - 3, lastTextPos - match[0].length + 4);
+				if(debug) console.log('comment node', text)
 				currentParent.appendChild(new CommentNode(text));
 			}
 			continue;
@@ -916,10 +913,12 @@ export function parse(data: string, options?: {
 		if (!match[1]) {
 			if (!match[9] && kElementsClosedByOpening[currentParent.tagName as keyof typeof kElementsClosedByOpening]) {
 				if (kElementsClosedByOpening[currentParent.tagName as 'li'][match[2] as 'li']) {
+					if(debug) console.log('closed', currentParent.tagName, 'when opening', match[2])
 					stack.pop();
 					currentParent = arr_back(stack);
 				}
 			}
+			if(debug) console.log('add', match[2], 'tag to the stack')
 			currentParent = currentParent.appendChild(
 				new HTMLElement(match[2], match[3].trim()));
 			stack.push(currentParent);
@@ -936,6 +935,7 @@ export function parse(data: string, options?: {
 						text = data.substring(kMarkupPattern.lastIndex, index);
 					}
 					if (text.length > 0) {
+						if(debug) console.log('add text node as child of', match[2])
 						currentParent.appendChild(new TextNode(text));
 					}
 				}
@@ -954,6 +954,7 @@ export function parse(data: string, options?: {
 			// </ or /> or <br> etc.
 			while (true) {
 				if (currentParent.tagName == match[2]) {
+					if(debug) console.log('met the end of', match[2])
 					stack.pop();
 					currentParent = arr_back(stack);
 					break;
@@ -961,6 +962,7 @@ export function parse(data: string, options?: {
 					// Trying to close current tag, and move on
 					if (kElementsClosedByClosing[currentParent.tagName as keyof typeof kElementsClosedByClosing]) {
 						if (kElementsClosedByClosing[currentParent.tagName as 'li'][match[2] as 'ul']) {
+							if(debug) console.log('closing',currentParent.tagName, 'due to meeting', match[2])
 							stack.pop();
 							currentParent = arr_back(stack);
 							continue;
@@ -975,6 +977,7 @@ export function parse(data: string, options?: {
 
 	// Add the last characters as TextNode if they are remaining characters outside any tag
 	if (lastTextPos < data.length) {
+		if(debug) console.log('Final text node', data.substring(lastTextPos))
 		root.appendChild(new TextNode(data.substring(lastTextPos)))
 	}
 
@@ -986,6 +989,7 @@ export function parse(data: string, options?: {
 		const oneBefore = arr_back(stack);
 		if (last.parentNode && last.parentNode instanceof HTMLElement && last.parentNode.parentNode) {
 			if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
+				if(debug) console.log(last.tagName, 'is probably supposed to close', oneBefore.tagName)
 				// Pair error case <h3> <h3> handle : Fixes to <h3> </h3>
 				oneBefore.removeChild(last);
 				last.childNodes.forEach((child) => {
@@ -994,6 +998,7 @@ export function parse(data: string, options?: {
 				stack.pop();
 			} else {
 				// Single error  <div> <h3> </div> handle: Just removes <h3>
+				if(debug) console.log('no close tag found for', last.tagName, '. Removing')
 				oneBefore.removeChild(last);
 				last.childNodes.forEach((child) => {
 					oneBefore.appendChild(child);
