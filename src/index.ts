@@ -1,6 +1,6 @@
 import { decode, encode } from 'html-entities';
 
-let debug = true
+let debug = false
 
 export enum NodeType {
 	ELEMENT_NODE = 1,
