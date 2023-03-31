@@ -151,6 +151,11 @@ describe('HTML Parser', function () {
 			root.firstChild.should.eql(div);
 		});
 
+		it('should set the parent when adding nodes', function () {
+			const root = parseHTML('<div>a</div><div>b</div>', { comment: true });
+			root.firstChild.parentNode.should.eql(root);
+		});
+
 		it('should parse picture element', function () {
 
 			const root = parseHTML('<picture><source srcset="/images/example-1.jpg 1200w, /images/example-2.jpg 1600w" sizes="100vw"><img src="/images/example.jpg" alt="Example"/></picture>');

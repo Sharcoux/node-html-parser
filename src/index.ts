@@ -1009,13 +1009,6 @@ export function parse(data: string, options?: ParsingOptions) {
 		}
 	}
 
-	// Mark root children as orphans, as the root is not a real element
-	root.childNodes.forEach((node) => {
-		if (node instanceof HTMLElement) {
-			node.parentNode = null;
-		}
-	});
-
 	return root;
 }
 
