@@ -112,6 +112,8 @@ Returns weither the provided node is a block. A node is considered a block is it
 | rawText         | Get escpaed (as-it) text value of current node and its children. May have `&amp;` in it. (fast)        |
 | structuredText  | Get structured Text                                                                                    |
 | structure       | Get DOM structure                                                                                      |
+| childNodes      | Get the children nodes                                                                                 |
+| children        | Get the children HTMLElement                                                                           |
 | firstChild      | Get first child node                                                                                   |
 | lastChild       | Get last child node                                                                                    |
 | attributes      | Get attributes                                                                                         |

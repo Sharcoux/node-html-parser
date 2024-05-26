@@ -256,6 +256,14 @@ export class HTMLElement extends AbstractNode {
 			.join('\n').replace(/\s+$/, '');	// trimRight;
 	}
 
+	/**
+	 * Returns the children of HTMLElement type (ignore text and comment nodes)
+	 * @returns {HTMLElement[]}
+	 */
+	get children() {
+		return this.childNodes.filter(child => child instanceof HTMLElement) as HTMLElement[]
+	}
+
 	public toString(): string {
 		const tag = this.tagName;
 		if (tag) {
