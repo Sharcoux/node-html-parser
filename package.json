@@ -2,8 +2,8 @@
   "name": "node-html-better-parser",
   "version": "1.4.5",
   "description": "A very fast HTML parser, generating a simplified DOM, with basic element query support.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
     "test": "mocha --recursive --extension ts",
     "clean": "del-cli ./dist/",
@@ -42,7 +42,7 @@
   },
   "config": {
     "blanket": {
-      "pattern": "./dist/index.js",
+      "pattern": "./dist/src/index.js",
       "data-cover-never": [
         "node_modules"
       ]
