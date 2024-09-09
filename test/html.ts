@@ -296,7 +296,6 @@ describe('HTML Parser', function () {
 		})
 
 		it('gmail.html  should return Object with valid: true', function () {
-			console.log('anything')
 			const result = parse(fs.readFileSync(__dirname + '/html/gmail.html').toString().replace(/<\//gi, '<'));
 			result.valid.should.eql(false);
 		})
@@ -455,9 +454,9 @@ describe('HTML Parser', function () {
 			});
 		});
 
-		describe.only('#querySelectorAll()', function () {
+		describe('#querySelectorAll()', function () {
 			it('should return correct elements in DOM tree', function () {
-				const root = parse('<a id="id"><div><span class="a b"></span><span></span><span></span></div></a>');
+				const root = parse('<a id="id"><div><span id="3" class="a b"></span><span></span><span></span></div></a>');
 				const child = root.firstChild as HTMLElement
 				const grandChild = child.firstChild as HTMLElement
 				root.querySelectorAll('#id').should.eql([child]);
@@ -472,9 +471,13 @@ describe('HTML Parser', function () {
 				const root = parse('<time class="date">');
 				root.querySelectorAll('time,.date').should.eql([root.firstChild]);
 			});
-			it.only('should return all elements', function () {
+			it('should return all elements', function () {
 				const root = parse(`<div><div></div></div>`)				
 				root.querySelectorAll('div').length.should.eql(2)
+			});
+			it('should return elements in correct order', function () {
+				const root = parse(`<div id="1"><div id="2"></div><div id="3"></div></div>`)
+				root.querySelectorAll('div').map(div => div.id).join(',').should.eql('1,2,3')
 			});
 		});
 

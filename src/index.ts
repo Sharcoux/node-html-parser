@@ -390,7 +390,7 @@ export class HTMLElement extends AbstractNode {
 		if (!(selector instanceof Matcher)) {
 			if (selector.includes(',')) {
 				const selectors = selector.split(',');
-				const results = new Set(...selectors.map(selector => this.querySelectorAll(selector.trim())))
+				const results = new Set(selectors.map(selector => this.querySelectorAll(selector.trim())).flat())
 				return Array.from(results)
 			}
 			else return this.querySelectorAll(new Matcher(selector))
@@ -402,7 +402,7 @@ export class HTMLElement extends AbstractNode {
 		
     this.childNodes.forEach((node) => stack.push(node));
     while (stack.length > 0) {
-			const node = stack.pop();
+			const node = stack.shift();
 
 			if (node.nodeType === NodeType.ELEMENT_NODE) {
 				// If the node matches
