@@ -1,5 +1,5 @@
 {
-  "include": ["./src/"],
+  "include": ["./src/", "./test/"],
   "compilerOptions": {
     "module": "commonjs",
     "target": "es6",
@@ -9,8 +9,6 @@
     "experimentalDecorators": true,
     "strictNullChecks": false,
     "noImplicitThis": true,
-    "rootDir": "./src/",
-    "rootDirs": [],
     "allowJs": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -52,6 +50,6 @@
     "stripInternal": false,
     "suppressExcessPropertyErrors": false,
     "traceResolution": false,
-    "types": ["node"]
+    "types": ["node", "mocha"]
   }
 }

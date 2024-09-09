@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --recursive --extension ts",
     "clean": "del-cli ./dist/",
     "ts:cjs": "tsc -m commonjs",
     "ts:umd": "tsc -t es5 -m umd -d false --outDir ./dist/umd/",
@@ -28,6 +28,7 @@
     "html-entities": "^2.3.2"
   },
   "devDependencies": {
+    "@types/mocha": "latest",
     "@types/node": "latest",
     "blanket": "latest",
     "del-cli": "latest",
@@ -36,6 +37,7 @@
     "should": "latest",
     "spec": "latest",
     "travis-cov": "latest",
+    "ts-node": "latest",
     "typescript": "next"
   },
   "config": {

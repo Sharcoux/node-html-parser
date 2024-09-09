@@ -1,1 +1,4 @@
-require: blanket,should,spec
+require:
+  - ts-node/register
+  - should
+  - spec

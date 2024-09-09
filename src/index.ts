@@ -387,55 +387,43 @@ export class HTMLElement extends AbstractNode {
 	 * @return {HTMLElement[]}  matching elements
 	 */
 	public querySelectorAll(selector: string | Matcher): HTMLElement[] {
-		let matcher: Matcher;
-		if (selector instanceof Matcher) {
-			matcher = selector;
-			matcher.reset();
-		} else {
+		if (!(selector instanceof Matcher)) {
 			if (selector.includes(',')) {
 				const selectors = selector.split(',');
-				return Array.from(selectors.reduce((pre, cur) => {
-					const result = this.querySelectorAll(cur.trim());
-					return result.reduce((p, c) => {
-						return p.add(c);
-					}, pre);
-				}, new Set<HTMLElement>()));
+				const results = new Set(...selectors.map(selector => this.querySelectorAll(selector.trim())))
+				return Array.from(results)
 			}
-			matcher = new Matcher(selector);
+			else return this.querySelectorAll(new Matcher(selector))
 		}
-		const res = [] as HTMLElement[];
-		const stack = [] as { 0: Node; 1: 0 | 1; 2: boolean; }[];
-		for (let i = 0; i < this.childNodes.length; i++) {
-			stack.push([this.childNodes[i], 0, false]);
-			while (stack.length) {
-				const state = arr_back(stack);
-				const el = state[0];
-				if (state[1] === 0) {
-					// Seen for first time.
-					if (el.nodeType !== NodeType.ELEMENT_NODE) {
-						stack.pop();
-						continue;
-					}
-					if (state[2] = matcher.advance(el)) {
-						if (matcher.matched) {
-							res.push(el);
-							// no need to go further.
-							matcher.rewind();
-							stack.pop();
-							continue;
-						}
-					}
-				}
-				if (state[1] < el.childNodes.length) {
-					stack.push([el.childNodes[state[1]++], 0, false]);
-				} else {
-					if (state[2])
+		const matcher = selector
+		
+    const res = new Set<HTMLElement>();
+    const stack = [] as Node[]
+		
+    this.childNodes.forEach((node) => stack.push(node));
+    while (stack.length > 0) {
+			const node = stack.pop();
+
+			if (node.nodeType === NodeType.ELEMENT_NODE) {
+				// If the node matches
+				if (matcher.advance(node)) {
+					if (matcher.matched) {
+						// Add the matched node to the results
+						res.add(node as HTMLElement);
+						// We keep looking for children
 						matcher.rewind();
-					stack.pop();
+					}
 				}
+
+				// Add the children nodes to the stack
+				(node as HTMLElement).childNodes.forEach((childNode) => {
+						stack.push(childNode);
+				});
+
 			}
-		}
-		return res;
+    }
+
+    return Array.from(res);
 	}
 
 	/**
@@ -759,6 +747,7 @@ export class Matcher {
 				if (tagName[0] == '#') {
 					source += 'if (el.id != ' + JSON.stringify(tagName.substr(1)) + ') return false;';//1
 					function_name += '1';
+					// @ts-ignore
 				} else if (matcher = tagName.match(/^\[\s*(\S+)\s*(=|!=)\s*((((["'])([^\6]*)\6))|(\S*?))\]\s*/)) {
 					attr_key = matcher[1];
 					let method = matcher[2];
