@@ -241,6 +241,16 @@ describe('HTML Parser', function () {
 			child.attributes.attr.should.eql(">")
 		})
 
+		it('should parse malformed attributes : <span id="tree-title-end" class="editable" "=""></span>', function () {
+			const root = parse("<span id='tree-title-end' ;=\"\" test='a' \"random text\" 'more text' \"=\"\" '=' class='editable'></span>")
+			const child = root.firstChild as HTMLElement
+			child.tagName.should.eql("span")
+			child.attributes.id.should.eql("tree-title-end")
+			child.attributes.class.should.eql("editable")
+			child.attributes['class'].should.eql("editable")
+			child.attributes['id'].should.eql("tree-title-end")
+		})
+
 	});
 
 	describe('parseWithValidation', function () {

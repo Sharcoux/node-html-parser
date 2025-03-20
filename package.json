@@ -9,7 +9,7 @@
     "clean": "del-cli ./dist/",
     "ts:cjs": "tsc -m commonjs",
     "ts:umd": "tsc -t es5 -m umd -d false --outDir ./dist/umd/",
-    "build": "npm run clean && npm run ts:cjs && npm run ts:umd",
+    "build": "npm run test && npm run clean && npm run ts:cjs && npm run ts:umd",
     "dev": "tsc -w",
     "prepare": "npm run build",
     "release": "release-it",
