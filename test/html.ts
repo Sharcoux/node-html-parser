@@ -251,6 +251,14 @@ describe('HTML Parser', function () {
 			child.attributes['id'].should.eql("tree-title-end")
 		})
 
+		it('should parse malformed attributes : <img src="https://bienalecole.fr/wp-content/uploads/2023/05/icon1.png" "="">', function () {
+			const root = parse("<img src=\"https://bienalecole.fr/wp-content/uploads/2023/05/icon1.png\" \"=\"\">")
+			const child = root.firstChild as HTMLElement
+			child.tagName.should.eql("img")
+			child.attributes.src.should.eql("https://bienalecole.fr/wp-content/uploads/2023/05/icon1.png")
+			child.attributes['src'].should.eql("https://bienalecole.fr/wp-content/uploads/2023/05/icon1.png")
+		})
+
 		it('should parse multiline svg :', function () {
 			const root = parse(`<svg viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
