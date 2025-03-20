@@ -251,6 +251,20 @@ describe('HTML Parser', function () {
 			child.attributes['id'].should.eql("tree-title-end")
 		})
 
+		it('should parse multiline svg :', function () {
+			const root = parse(`<svg viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+        d="M14.0669 1.66309L2.03027 13.259"
+    />
+    <path
+        d="M2.03027 1.66309L14.0669 13.259"
+    />
+</svg>
+`)
+			const child = root.firstChild as HTMLElement
+			child.tagName.should.eql("svg")
+			child.children.length === 2
+		})
 	});
 
 	describe('parseWithValidation', function () {
