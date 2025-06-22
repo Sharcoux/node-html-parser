@@ -842,25 +842,35 @@ const kSelfClosingElements = {
 };
 const kElementsClosedByOpening = {
 	li: { li: true },
-	p: { p: true, div: true },
+	p: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	b: { div: true },
 	td: { td: true, th: true },
 	th: { td: true, th: true },
-	h1: { h1: true },
-	h2: { h2: true },
-	h3: { h3: true },
-	h4: { h4: true },
-	h5: { h5: true },
-	h6: { h6: true }
-};
-const kElementsClosedByClosing = {
-	li: { ul: true, ol: true },
-	a: { div: true },
-	b: { div: true },
-	i: { div: true },
-	p: { div: true },
-	td: { tr: true, table: true },
-	th: { tr: true, table: true }
+	h1: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h2: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h3: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h4: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h5: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h6: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	// Table elements
+	tr: { tr: true, thead: true, tbody: true, tfoot: true },
+	thead: { thead: true, tbody: true, tfoot: true },
+	tbody: { tbody: true, tfoot: true },
+	tfoot: { tfoot: true },
+	// List elements
+	ul: { ul: true, ol: true },
+	ol: { ol: true, ul: true },
+	// Section elements
+	section: { section: true, div: true },
+	article: { article: true, div: true },
+	aside: { aside: true, div: true },
+	nav: { nav: true, div: true },
+	// Form elements
+	form: { form: true },
+	// Header elements
+	header: { header: true, div: true },
+	footer: { footer: true, div: true },
+	main: { main: true, div: true }
 };
 const kBlockTextElements = {
 	script: true,
@@ -955,17 +965,15 @@ export function parse(data: string, options?: ParsingOptions) {
 					stack.pop();
 					currentParent = arr_back(stack);
 					break;
+				} else if (stack.length > 1) {
+					// Close unclosed child tag before closing the parent
+					// This handles cases like <a><b>text</a> where <b> should be closed before </a>
+					if(debug) console.log('closing unclosed child tag', currentParent.tagName, 'before closing', match[2])
+					stack.pop();
+					currentParent = arr_back(stack);
+					continue;
 				} else {
-					// Trying to close current tag, and move on
-					if (kElementsClosedByClosing[currentParent.tagName as keyof typeof kElementsClosedByClosing]) {
-						if (kElementsClosedByClosing[currentParent.tagName as 'li'][match[2] as 'ul']) {
-							if(debug) console.log('closing',currentParent.tagName, 'due to meeting', match[2])
-							stack.pop();
-							currentParent = arr_back(stack);
-							continue;
-						}
-					}
-					// Use aggressive strategy to handle unmatching markups.
+					// No matching tag found to close, exit the loop
 					break;
 				}
 			}

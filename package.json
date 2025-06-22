@@ -5,15 +5,14 @@
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
-    "test": "mocha --recursive --extension ts",
+    "test": "jest",
     "clean": "del-cli ./dist/",
     "ts:cjs": "tsc -m commonjs",
     "ts:umd": "tsc -t es5 -m umd -d false --outDir ./dist/umd/",
     "build": "npm run test && npm run clean && npm run ts:cjs && npm run ts:umd",
     "dev": "tsc -w",
     "prepare": "npm run build",
-    "release": "npm run build && release-it",
-    "pretest": "tsc -m commonjs"
+    "release": "npm run build && release-it"
   },
   "keywords": [
     "fast html parser nodejs typescript"
@@ -28,28 +27,14 @@
     "html-entities": "^2.3.2"
   },
   "devDependencies": {
-    "@types/mocha": "latest",
+    "@types/jest": "^30.0.0",
     "@types/node": "latest",
-    "blanket": "latest",
     "del-cli": "latest",
-    "mocha": "latest",
+    "jest": "^30.0.2",
     "release-it": "latest",
-    "should": "latest",
-    "spec": "latest",
-    "travis-cov": "latest",
+    "ts-jest": "^29.4.0",
     "ts-node": "latest",
     "typescript": "next"
-  },
-  "config": {
-    "blanket": {
-      "pattern": "./dist/src/index.js",
-      "data-cover-never": [
-        "node_modules"
-      ]
-    },
-    "travis-cov": {
-      "threshold": 70
-    }
   },
   "directories": {
     "test": "test"

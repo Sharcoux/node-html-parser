@@ -50,6 +50,6 @@
     "stripInternal": false,
     "suppressExcessPropertyErrors": false,
     "traceResolution": false,
-    "types": ["node", "mocha"]
+    "types": ["node", "jest"]
   }
 }
