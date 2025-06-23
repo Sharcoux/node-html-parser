@@ -387,43 +387,59 @@ export class HTMLElement extends AbstractNode {
 	 * @return {HTMLElement[]}  matching elements
 	 */
 	public querySelectorAll(selector: string | Matcher): HTMLElement[] {
-		if (!(selector instanceof Matcher)) {
-			if (selector.includes(',')) {
-				const selectors = selector.split(',');
-				const results = new Set(selectors.map(selector => this.querySelectorAll(selector.trim())).flat())
-				return Array.from(results)
-			}
-			else return this.querySelectorAll(new Matcher(selector))
+		let matcher: Matcher;
+		if (selector instanceof Matcher) {
+			matcher = selector;
+			matcher.reset();
+			return this.querySelectorImpl(selector, true)
+		} else {
+			const parts = selector.split(',').filter(part => part.trim()).map(part => part.trim())
+			const result = new Set<HTMLElement>(parts.map(part => this.querySelectorImpl(new Matcher(part), true)).flat())
+			return Array.from(result)
 		}
-		const matcher = selector
-		
-    const res = new Set<HTMLElement>();
-    const stack = [] as Node[]
-		
-    this.childNodes.forEach((node) => stack.push(node));
-    while (stack.length > 0) {
-			const node = stack.shift();
+	}
 
-			if (node.nodeType === NodeType.ELEMENT_NODE) {
-				// If the node matches
-				if (matcher.advance(node)) {
-					if (matcher.matched) {
-						// Add the matched node to the results
-						res.add(node as HTMLElement);
-						// We keep looking for children
-						matcher.rewind();
-					}
-				}
+	/**
+	 * Query CSS selector implementation
+	 * @param matcher The matcher to use for selection
+	 * @param all Whether to return all matches or just the first one
+	 */
+	private querySelectorImpl(matcher: Matcher, all: true): HTMLElement[];
+	private querySelectorImpl(matcher: Matcher, all: false): HTMLElement | null;
+	private querySelectorImpl(matcher: Matcher, all: boolean): HTMLElement[] | HTMLElement | null {
+		function explore(node: HTMLElement, currentMatcher: Matcher, all: true): HTMLElement[]
+		function explore(node: HTMLElement, currentMatcher: Matcher, all: false): HTMLElement | null
+		function explore(node: HTMLElement, currentMatcher: Matcher, all: boolean): HTMLElement[] | HTMLElement | null {
+			if (debug) console.log('exploring:', node.toString().replace(/\s+/g, ' '), 'matcher level:', currentMatcher.level);
+			
+			const advanced = node.tagName ? currentMatcher.advance(node) : false;
+			if (debug) console.log('advanced:', advanced, 'matched:', currentMatcher.matched);
 
-				// Add the children nodes to the stack
-				(node as HTMLElement).childNodes.forEach((childNode) => {
-						stack.push(childNode);
-				});
+			// If we look for a single node and we found it, return it
+			if (!all && advanced && currentMatcher.matched) return node;
 
+			// If we look for all matching nodes and advanced the matcher, we need to create a new matcher to explore the descendants
+			// with the same level too
+			else if (advanced && all) {
+				const clonedMatcher = currentMatcher.clone()
+				clonedMatcher.rewind()
+				const childrenResults = node.children.map(child => explore(child, clonedMatcher.clone(), true)).flat()
+				if (currentMatcher.matched) return [node, ...childrenResults]
+				else return childrenResults.concat(...node.children.map(child => explore(child, currentMatcher.clone(), true)).flat())
 			}
-    }
-
-    return Array.from(res);
+			// If we look for all nodes but we didn't advance the matcher, we need to explore the children
+			else if (all) return node.children.map(child => explore(child, currentMatcher.clone(), true)).flat();
+			// If we look for a single node and didn't advance the matcher, find the target in the children
+			else {
+				for (const child of node.children) {
+					const result = explore(child, currentMatcher.clone(), false);
+					if (result) return result;
+				}
+				return null;
+			}
+		};
+		
+		return all ? explore(this, matcher, true) : explore(this, matcher, false);
 	}
 
 	/**
@@ -437,37 +453,15 @@ export class HTMLElement extends AbstractNode {
 		if (selector instanceof Matcher) {
 			matcher = selector;
 			matcher.reset();
+			return this.querySelectorImpl(selector, false)
 		} else {
-			matcher = new Matcher(selector);
-		}
-		const stack = [] as { 0: Node; 1: 0 | 1; 2: boolean; }[];
-		for (let i = 0; i < this.childNodes.length; i++) {
-			stack.push([this.childNodes[i], 0, false]);
-			while (stack.length) {
-				const state = arr_back(stack);
-				const el = state[0];
-				if (state[1] === 0) {
-					// Seen for first time.
-					if (el.nodeType !== NodeType.ELEMENT_NODE) {
-						stack.pop();
-						continue;
-					}
-					if (state[2] = matcher.advance(el)) {
-						if (matcher.matched) {
-							return el;
-						}
-					}
-				}
-				if (state[1] < el.childNodes.length) {
-					stack.push([el.childNodes[state[1]++], 0, false]);
-				} else {
-					if (state[2])
-						matcher.rewind();
-					stack.pop();
-				}
+			const parts = selector.split(',').map(part => part.trim()).filter(part => part.length)
+			for (const part of parts) {
+				const result = this.querySelectorImpl(new Matcher(part), false)
+				if (result) return result
 			}
+			return null
 		}
-		return null;
 	}
 
 	/**
@@ -604,223 +598,189 @@ export class HTMLElement extends AbstractNode {
 	}
 }
 
-interface MatherFunction { func: any; tagName: string; classes: string | string[]; attr_key: any; value: any; }
+// Removed old complex function cache system - now using simple composed functions in Matcher class
 
-/**
- * Cache to store generated match functions
- * @type {Object}
- */
-let pMatchFunctionCache = {} as { [name: string]: MatherFunction };
-
-/**
- * Function cache
- */
-const functionCache = {
-	"f145": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.id != tagName.substr(1)) return false;
-		for (let cls = classes, i = 0; i < cls.length; i++) if (el.classNames.indexOf(cls[i]) === -1) return false;
-		return true;
-	},
-	"f45": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		for (let cls = classes, i = 0; i < cls.length; i++) if (el.classNames.indexOf(cls[i]) === -1) return false;
-		return true;
-	},
-	"f15": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.id != tagName.substr(1)) return false;
-		return true;
-	},
-	"f1": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.id != tagName.substr(1)) return false;
-	},
-	"f5": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		el = el || {} as HTMLElement;
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		return true;
-	},
-	"f245": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		let attrs = el.attributes; for (let key in attrs) { const val = attrs[key]; if (key == attr_key && val == value) { return true; } } return false;
-		// for (let cls = classes, i = 0; i < cls.length; i++) {if (el.classNames.indexOf(cls[i]) === -1){ return false;}}
-		// return true;
-	},
-	"f25": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		let attrs = el.attributes; for (let key in attrs) { const val = attrs[key]; if (key == attr_key && val == value) { return true; } } return false;
-		//return true;
-	},
-	"f2": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		let attrs = el.attributes; for (let key in attrs) { const val = attrs[key]; if (key == attr_key && val == value) { return true; } } return false;
-	},
-	"f345": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.tagName != tagName) return false;
-		for (let cls = classes, i = 0; i < cls.length; i++) if (el.classNames.indexOf(cls[i]) === -1) return false;
-		return true;
-	},
-	"f35": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.tagName != tagName) return false;
-		return true;
-	},
-	"f3": function (el: HTMLElement, tagName: string, classes: string[], attr_key: string, value: string) {
-		"use strict";
-		tagName = tagName || "";
-		classes = classes || [];
-		attr_key = attr_key || "";
-		value = value || "";
-		if (el.tagName != tagName) return false;
-	}
-}
 /**
  * Matcher class to make CSS match
  *
  * @class Matcher
  */
 export class Matcher {
-	private matchers: MatherFunction[];
+	private checkers: Array<(el: HTMLElement) => boolean> = [];
 	private nextMatch = 0;
+
 	/**
 	 * Creates an instance of Matcher.
 	 * @param {string} selector
-	 *
-	 * @memberof Matcher
 	 */
 	constructor(selector: string) {
-		functionCache["f5"] = functionCache["f5"];
-		this.matchers = selector.split(' ').map((matcher) => {
-			if (pMatchFunctionCache[matcher])
-				return pMatchFunctionCache[matcher];
-			const parts = matcher.split('.');
-			const tagName = parts[0];
-			const classes = parts.slice(1).sort();
-			let source = '"use strict";';
-			let function_name = 'f';
-			let attr_key = "";
-			let value = "";
-			if (tagName && tagName != '*') {
-				let matcher: RegExpMatchArray;
-				if (tagName[0] == '#') {
-					source += 'if (el.id != ' + JSON.stringify(tagName.substr(1)) + ') return false;';//1
-					function_name += '1';
-					// @ts-ignore
-				} else if (matcher = tagName.match(/^\[\s*(\S+)\s*(=|!=)\s*((((["'])([^\6]*)\6))|(\S*?))\]\s*/)) {
-					attr_key = matcher[1];
-					let method = matcher[2];
-					if (method !== '=' && method !== '!=') {
-						throw new Error('Selector not supported, Expect [key${op}value].op must be =,!=');
-					}
-					if (method === '=') {
-						method = '==';
-					}
-					value = matcher[7] || matcher[8];
-
-					source += `let attrs = el.attributes;for (let key in attrs){const val = attrs[key]; if (key == "${attr_key}" && val == "${value}"){return true;}} return false;`;//2
-					function_name += '2';
-				} else {
-					source += 'if (el.tagName != ' + JSON.stringify(tagName) + ') return false;';//3
-					function_name += '3';
-				}
-			}
-			if (classes.length > 0) {
-				source += 'for (let cls = ' + JSON.stringify(classes) + ', i = 0; i < cls.length; i++) if (el.classNames.indexOf(cls[i]) === -1) return false;';//4
-				function_name += '4';
-			}
-			source += 'return true;';//5
-			function_name += '5';
-			let obj = {
-				func: functionCache[function_name as keyof typeof functionCache],
-				tagName: tagName || "",
-				classes: classes || "",
-				attr_key: attr_key || "",
-				value: value || ""
-			}
-			source = source || "";
-			return pMatchFunctionCache[matcher] = obj;
-		});
+		this.checkers = selector ? this.parseCompleteSelector(selector) : [];
 	}
+
+	/**
+	 * Parse complete CSS selector using regex to extract all parts
+	 */
+	private parseCompleteSelector(selector: string): Array<(el: HTMLElement) => boolean> {
+		// Regex to match complete selector parts (tag#id.class1.class2[attr1][attr2])
+		// This captures each descendant selector part as a whole
+		const selectorPartRegex = /(?:^|\s+)([a-zA-Z*][\w-]*)?(?:#([\w-]+))?(?:\.([\w-]+(?:\.[\w-]+)*))?(\[(?:[^\]]+)\](?:\[(?:[^\]]+)\])*)?/g;
+		
+		const parsedSelectors = [];
+		let match;
+		while ((match = selectorPartRegex.exec(selector)) !== null) {
+			if (match[0].trim()) { // Skip empty matches
+				parsedSelectors.push({
+					tag: match[1] || '',
+					id: match[2] || '',
+					classes: match[3] ? match[3].split('.') : [],
+					attrs: this.parseAttributes(match[4] || '')
+				});
+			}
+		}
+
+		return parsedSelectors.map(part => this.createCheckerFromParsed(part));
+	}
+
+	/**
+	 * Parse attributes string like "[attr1][attr2=value]" into structured data
+	 */
+	private parseAttributes(attrsString: string): Array<{ key: string; op: string; value: string }> {
+		if (!attrsString) return [];
+		
+		const attrs: Array<{ key: string; op: string; value: string }> = [];
+		const attrRegex = /\[([^\s~|^$*!=]+)(?:\s*(=|!=|\^=|\$=|\*=|\|=|~=)\s*(?:["']?([^"'\]]*)["']?)?)?\]/g;
+		
+		let match;
+		while ((match = attrRegex.exec(attrsString)) !== null) {
+			attrs.push({
+				key: match[1],
+				op: match[2] || '',
+				value: match[3] || ''
+			});
+		}
+		
+		return attrs;
+	}
+
+	/**
+	 * Create a checker function from parsed selector data
+	 */
+	private createCheckerFromParsed(parsed: {
+		tag: string;
+		id: string;
+		classes: string[];
+		attrs: Array<{ key: string; op: string; value: string }>;
+	}): (el: HTMLElement) => boolean {
+		// Create array of check functions - only for what's needed
+		const checks: Array<(element: HTMLElement) => boolean> = [];
+		
+		if (parsed.tag && parsed.tag !== '*') checks.push(element => element.tagName === parsed.tag);
+		if (parsed.id) checks.push(element => element.id === parsed.id);
+		
+		if (parsed.classes.length > 0) {
+			for (const cls of parsed.classes) {
+				checks.push(element => element.classNames.includes(cls));
+			}
+		}
+		
+		if (parsed.attrs.length > 0) {
+			const attrChecks = parsed.attrs.map(attr => this.createAttributeChecker(attr.key, attr.op, attr.value));
+			checks.push(element => attrChecks.every(check => check(element)));
+		}
+		
+		// Return a function that checks all conditions
+		return element => checks.every(check => check(element));
+	}
+
+	/**
+	 * Create attribute checker function
+	 */
+	private createAttributeChecker(attrKey: string, operator: string, value: string): (element: HTMLElement) => boolean {
+		switch (operator) {
+			case '=':
+				return element => element.attributes[attrKey] === value;
+			case '!=':
+				return element => element.attributes[attrKey] !== value;
+			case '^=':
+				return element => {
+					const attrValue = element.attributes[attrKey];
+					return attrValue !== undefined && attrValue.startsWith(value);
+				};
+			case '$=':
+				return element => {
+					const attrValue = element.attributes[attrKey];
+					return attrValue !== undefined && attrValue.endsWith(value);
+				};
+			case '*=':
+				return element => {
+					const attrValue = element.attributes[attrKey];
+					return attrValue !== undefined && attrValue.includes(value);
+				};
+			case '|=':
+				return element => {
+					const attrValue = element.attributes[attrKey];
+					return attrValue !== undefined && (attrValue === value || attrValue.startsWith(value + '-'));
+				};
+			case '~=':
+				return element => {
+					const attrValue = element.attributes[attrKey];
+					return attrValue !== undefined && attrValue.split(/\s+/).includes(value);
+				};
+			default:
+				return element => element.attributes[attrKey] !== undefined;
+		}
+	}
+
 	/**
 	 * Trying to advance match pointer
-	 * @param  {Node} el element to make the match
+	 * @param  {HTMLElement} el element to make the match
 	 * @return {bool}           true when pointer advanced.
 	 */
-	advance(el: Node) {
-		if (this.nextMatch < this.matchers.length &&
-			this.matchers[this.nextMatch].func(el, this.matchers[this.nextMatch].tagName, this.matchers[this.nextMatch].classes, this.matchers[this.nextMatch].attr_key, this.matchers[this.nextMatch].value)) {
+	advance(el: HTMLElement): boolean {
+		if (this.nextMatch < this.checkers.length && this.checkers[this.nextMatch](el)) {
 			this.nextMatch++;
 			return true;
 		}
 		return false;
 	}
+
 	/**
 	 * Rewind the match pointer
 	 */
-	rewind() {
+	rewind(): void {
 		this.nextMatch--;
 	}
+
 	/**
 	 * Trying to determine if match made.
 	 * @return {bool} true when the match is made
 	 */
-	get matched() {
-		return this.nextMatch == this.matchers.length;
+	get matched(): boolean {
+		return this.nextMatch === this.checkers.length;
 	}
+
 	/**
-	 * Rest match pointer.
-	 * @return {[type]} [description]
+	 * Reset match pointer.
 	 */
-	reset() {
+	reset(): void {
 		this.nextMatch = 0;
 	}
+
 	/**
-	 * flush cache to free memory
+	 * Get current match level (for debugging)
 	 */
-	flushCache() {
-		pMatchFunctionCache = {};
+	get level(): number {
+		return this.nextMatch;
+	}
+
+	/**
+	 * Clone this matcher with current state
+	 */
+	clone(): Matcher {
+		const cloned = new Matcher(''); // Empty selector, we'll copy the checkers
+		cloned.checkers = this.checkers;
+		cloned.nextMatch = this.nextMatch;
+		return cloned;
 	}
 }
 
@@ -842,16 +802,16 @@ const kSelfClosingElements = {
 };
 const kElementsClosedByOpening = {
 	li: { li: true },
-	p: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	p: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	b: { div: true },
 	td: { td: true, th: true },
 	th: { td: true, th: true },
-	h1: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
-	h2: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
-	h3: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
-	h4: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
-	h5: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
-	h6: { p: true, div: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h1: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h2: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h3: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h4: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h5: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
+	h6: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	// Table elements
 	tr: { tr: true, thead: true, tbody: true, tfoot: true },
 	thead: { thead: true, tbody: true, tfoot: true },
@@ -861,16 +821,16 @@ const kElementsClosedByOpening = {
 	ul: { ul: true, ol: true },
 	ol: { ol: true, ul: true },
 	// Section elements
-	section: { section: true, div: true },
-	article: { article: true, div: true },
-	aside: { aside: true, div: true },
-	nav: { nav: true, div: true },
+	section: { section: true },
+	article: { article: true },
+	aside: { aside: true },
+	nav: { nav: true },
 	// Form elements
 	form: { form: true },
 	// Header elements
-	header: { header: true, div: true },
-	footer: { footer: true, div: true },
-	main: { main: true, div: true }
+	header: { header: true },
+	footer: { footer: true },
+	main: { main: true }
 };
 const kBlockTextElements = {
 	script: true,

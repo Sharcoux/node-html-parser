@@ -217,6 +217,24 @@ describe('HTML Parser', () => {
 
 		});
 
+		it('should parse nested elements', () => {
+			const html = `
+				<article class="post">
+					<header>
+						<h1 class="title">Post Title</h1>
+					</header>
+					<div class="content">
+						<p data-paragraph="1">First paragraph</p>
+						<p data-paragraph="2">Second paragraph</p>
+						<a href="https://example.com" target="_blank" rel="noopener">External Link</a>
+						<a href="/internal.html" class="internal">Internal Link</a>
+					</div>
+				</article>
+			`
+			const root = parse(html);
+			expect(root.toString()).toBe(html);
+		})
+
 		// Should parse self closing tags.
 
 		it('should parse self closing tag', () => {
@@ -316,10 +334,10 @@ describe('HTML Parser', () => {
 
 		// fix issue speed test
 
-		it('should fix "<div><h3><h3><div>" to "<div><h3></h3><h3></h3></div>"', () => {
+		it('should fix "<div><h3><h3><div>" to "<div><h3></h3></div>"', () => {
 			const result = parse('<div data-id=1><h3 data-id=2><h3><div>');
 			expect(result.valid).toEqual(false);
-			expect(result.toString()).toEqual('<div data-id=1><h3 data-id=2></h3><h3></h3></div>');
+			expect(result.toString()).toEqual('<div data-id=1><h3 data-id=2></h3></div>');
 		})
 
 		it('should fix "<div><h3><h3><span><span><div>" to "<div><h3></h3><span></span></div>"', () => {
@@ -387,7 +405,7 @@ describe('HTML Parser', () => {
 
 				const child = root.firstChild as HTMLElement
 				child.parentNode = null
-				expect(child.removeWhitespace().toString()).toEqual(p.toString());
+				expect(child.removeWhitespace()).toEqual(p);
 			});
 		});
 
@@ -476,16 +494,16 @@ describe('HTML Parser', () => {
 		describe('#querySelector()', () => {
 			it('should return correct elements in DOM tree', () => {
 				const root = parse('<a id="id" data-id="myid"><div><span class="a b"></span><span></span><span></span></div></a>');
-				const child = root.firstChild as HTMLElement
-				const grandChild = child.firstChild as HTMLElement
-				expect(root.querySelector('#id')).toEqual(child);
-				expect(root.querySelector('span.a')).toEqual(grandChild.firstChild);
-				expect(root.querySelector('span.b')).toEqual(grandChild.firstChild);
-				expect(root.querySelector('span.a.b')).toEqual(grandChild.firstChild);
-				expect(root.querySelector('#id .b')).toEqual(grandChild.firstChild);
-				expect(root.querySelector('#id span')).toEqual(grandChild.firstChild);
-				expect(root.querySelector('[data-id=myid]')).toEqual(child);
-				expect(root.querySelector('[data-id="myid"]')).toEqual(child);
+				const childA = root.firstChild as HTMLElement
+				const childSpan = childA.firstChild as HTMLElement
+				expect(root.querySelector('#id')).toEqual(childA);
+				expect(root.querySelector('span.a')).toEqual(childSpan.firstChild);
+				expect(root.querySelector('span.b')).toEqual(childSpan.firstChild);
+				expect(root.querySelector('span.a.b')).toEqual(childSpan.firstChild);
+				expect(root.querySelector('#id .b')).toEqual(childSpan.firstChild);
+				expect(root.querySelector('#id span')).toEqual(childSpan.firstChild);
+				expect(root.querySelector('[data-id=myid]')).toEqual(childA);
+				expect(root.querySelector('[data-id="myid"]')).toEqual(childA);
 			});
 		});
 
