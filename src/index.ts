@@ -522,6 +522,15 @@ export class HTMLElement extends AbstractNode {
 	}
 
 	/**
+	 * Get an attribute value
+	 * @param {string} key The attribute name
+	 * @return {string | undefined} The attribute value
+	 */
+	getAttribute(key: string): string | undefined {
+		return this.attributes[key];
+	}
+
+	/**
 	 * Get escaped (as-it) attributes
 	 * @return {Object} parsed attributes
 	 */
