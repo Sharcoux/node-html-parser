@@ -1,6 +1,6 @@
 import { parse } from '../src'
 
-const brokenHtml = `<table id="liste">
+const missingCloseTags = `<table id="liste">
         <span id="nbResultats">Nombre de résultats : 3308</span><br>
                     <tr style='border: 1px solid #ddd'>
                 <td><a class="lien-bouton" href="/detail/0441111U"><b>ECOLE PRIMAIRE PRIVEE
@@ -23,8 +23,18 @@ const brokenHtml = `<table id="liste">
 </table>`;
 
 describe('Broken HTML', () => {
-    it('should parse the broken HTML', () => {
-        const root = parse(brokenHtml);
+    it('should parse despite missing close tags', () => {
+        const root = parse(missingCloseTags);
         expect(root.querySelectorAll('tr').length).toEqual(2);
+    });
+
+    it('should parse despite missing space between attributes', () => {
+        const root = parse(`<body>
+  <div class="a"data-test="/test.jpg"></div>
+  <div class="b"style="background-image:url('test.jpg')"></div>
+</body>`);
+        expect(root.children[0].children.length).toEqual(2);
+        expect(root.children[0].children[0].attributes['data-test']).toEqual(`/test.jpg`);
+        expect(root.children[0].children[1].attributes.style).toEqual(`background-image:url('test.jpg')`);
     });
 });

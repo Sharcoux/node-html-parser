@@ -651,4 +651,12 @@ describe('HTML Parser', () => {
 			expect(child.attributes.style).toEqual('font-family: "Nunito", "Arial", sans-serif');
 		});
 	});
+
+	describe('Background Image', () => {
+		it('parse background image', () => {
+			const root = parse(`<div class="a" style="background-image:url('test.jpg')"></div>`);
+			const child = root.querySelector('.a') as HTMLElement
+			expect(child.attributes.style).toEqual(`background-image:url('test.jpg')`);
+		});
+	});
 }); 
