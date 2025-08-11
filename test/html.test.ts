@@ -257,6 +257,17 @@ describe('HTML Parser', () => {
 			expect(child.attributes.attr).toEqual(">")
 		})
 
+		it('should parse nested nodes', () => {
+			const html = `<body>
+	<section>
+		<section>word</section>
+	</section>
+	<p>test</p>
+</body>`
+			const root = parse(html);
+			expect(root.outerHTML).toEqual(html);
+		});
+
 		it('should parse malformed attributes : <span id="tree-title-end" class="editable" "=""></span>', () => {
 			const root = parse("<span id='tree-title-end' ;=\"\" test='a' \"random text\" 'more text' \"=\"\" '=' class='editable'></span>")
 			const child = root.firstChild as HTMLElement

@@ -823,15 +823,13 @@ const kElementsClosedByOpening = {
 	h6: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	// Table elements
 	tr: { tr: true, thead: true, tbody: true, tfoot: true },
-	thead: { thead: true, tbody: true, tfoot: true },
-	tbody: { tbody: true, tfoot: true },
-	tfoot: { tfoot: true },
+	thead: { tr: true, thead: true, tbody: true, tfoot: true },
+	tbody: { tr: true, thead: true, tbody: true, tfoot: true },
+	tfoot: { tr: true, thead: true, tbody: true, tfoot: true },
 	// List elements
 	ul: { ul: true, ol: true },
 	ol: { ol: true, ul: true },
 	// Section elements
-	section: { section: true },
-	article: { article: true },
 	aside: { aside: true },
 	nav: { nav: true },
 	// Form elements
