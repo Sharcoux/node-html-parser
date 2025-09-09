@@ -42,7 +42,7 @@ export abstract class AbstractNode {
 	/** Return the html representation of this node */
 	abstract toString(): string;
 	/** Return the parent node or null if this node is the root of the tree */
-	public parentNode: HTMLElement | null;
+	public parentNode: HTMLElement | null = null;
 
 	/**
 	 * Remove this node from its parent if any
@@ -149,10 +149,10 @@ function arr_back<T>(arr: T[]) {
  * @extends {AbstractNode}
  */
 export class HTMLElement extends AbstractNode {
-	private _attrs: Attributes;
-	private _rawAttrs: RawAttributes;
+	private _attrs: Attributes | undefined;
+	private _rawAttrs: RawAttributes | undefined;
 	/** This is a short hand for the id attribute of this node */
-	public id: string;
+	public id: string | undefined;
 	/** This is a short hand to get the list of the class names attribute of this node */
 	public classNames: string[] = [];
 	/**
@@ -165,14 +165,15 @@ export class HTMLElement extends AbstractNode {
 	 *
 	 * @memberof HTMLElement
 	 */
-	constructor(public tagName: string, private rawAttrs = '', parentNode = null as HTMLElement) {
+	constructor(public tagName: string, private rawAttrs = '', parentNode = null as HTMLElement | null) {
 		super();
 		this.rawAttrs = rawAttrs;
 		this.parentNode = parentNode;
 		this.childNodes = [];
 		let keyAttrs = {} as KeyAttributes
 		for (let attMatch; attMatch = kIdClassAttributePattern.exec(rawAttrs);) {
-			keyAttrs[attMatch[2] as keyof typeof keyAttrs] = attMatch[4] || attMatch[5] || attMatch[6];
+			const key = attMatch[2];
+			if (key) keyAttrs[key as keyof KeyAttributes] = attMatch[4] || attMatch[5] || attMatch[6] || "";
 		}
 		if (keyAttrs.id) {
 			this.id = keyAttrs.id;
@@ -210,7 +211,7 @@ export class HTMLElement extends AbstractNode {
 	get rawText() {
 		let res = '';
 		for (let i = 0; i < this.childNodes.length; i++)
-			res += this.childNodes[i].rawText;
+			res += this.childNodes[i]!.rawText;
 		return res;
 	}
 	/**
@@ -315,7 +316,7 @@ export class HTMLElement extends AbstractNode {
 	 */
 	public trimRight(pattern: RegExp) {
 		for (let i = 0; i < this.childNodes.length; i++) {
-			const childNode = this.childNodes[i];
+			const childNode = this.childNodes[i]!;
 			if (childNode.nodeType === NodeType.ELEMENT_NODE) {
 				childNode.trimRight(pattern);
 			} else {
@@ -345,7 +346,7 @@ export class HTMLElement extends AbstractNode {
 			write(node.tagName + idStr + classStr);
 			indention++;
 			for (let i = 0; i < node.childNodes.length; i++) {
-				const childNode = node.childNodes[i];
+				const childNode = node.childNodes[i]!;
 				if (childNode.nodeType === NodeType.ELEMENT_NODE) {
 					dfs(childNode);
 				} else if (childNode.nodeType === NodeType.TEXT_NODE) {
@@ -366,7 +367,7 @@ export class HTMLElement extends AbstractNode {
 	public removeWhitespace() {
 		let o = 0;
 		for (let i = 0; i < this.childNodes.length; i++) {
-			const node = this.childNodes[i];
+			const node = this.childNodes[i]!;
 			if (node.nodeType === NodeType.TEXT_NODE) {
 				if (node.isWhitespace)
 					continue;
@@ -495,7 +496,7 @@ export class HTMLElement extends AbstractNode {
 	 * @return {Node} first child node
 	 */
 	get firstChild() {
-		return this.childNodes[0];
+		return this.childNodes[0]!;
 	}
 
 	/**
@@ -503,7 +504,7 @@ export class HTMLElement extends AbstractNode {
 	 * @return {Node} last child node
 	 */
 	get lastChild() {
-		return arr_back(this.childNodes);
+		return arr_back(this.childNodes)!;
 	}
 
 	/**
@@ -539,9 +540,11 @@ export class HTMLElement extends AbstractNode {
 			return this._rawAttrs;
 		const attrs = {} as RawAttributes;
 		if (this.rawAttrs) {
-			let match: RegExpExecArray;
+			let match: RegExpExecArray | null;
 			while (match = kAttributePattern.exec(this.rawAttrs)) {
-				attrs[match[1]] = match[4] || match[5] || match[6] || "";
+				const key = match[1];
+				const value = match[4] || match[5] || match[6] || "";
+				if (key) attrs[key] = value;
 			}
 		}
 		this._rawAttrs = attrs;
@@ -560,7 +563,7 @@ export class HTMLElement extends AbstractNode {
 		}
 		//Update the classNames
 		else if (key === "class") {
-			this.classNames = value.split(/\s+/);
+			this.classNames = value?.split(/\s+/) || [];
 		}
 		//Update the attributes map
 		const attrs = this.attributes;
@@ -661,11 +664,13 @@ export class Matcher {
 		
 		let match;
 		while ((match = attrRegex.exec(attrsString)) !== null) {
-			attrs.push({
-				key: match[1],
-				op: match[2] || '',
-				value: match[3] || ''
-			});
+			if (match[1]) {
+				attrs.push({
+					key: match[1],
+					op: match[2] || '',
+					value: match[3] || ''
+				});
+			}
 		}
 		
 		return attrs;
@@ -746,7 +751,7 @@ export class Matcher {
 	 * @return {bool}           true when pointer advanced.
 	 */
 	advance(el: HTMLElement): boolean {
-		if (this.nextMatch < this.checkers.length && this.checkers[this.nextMatch](el)) {
+		if (this.nextMatch < this.checkers.length && this.checkers[this.nextMatch]!(el)) {
 			this.nextMatch++;
 			return true;
 		}
@@ -853,12 +858,12 @@ const kBlockTextElements = {
  * @return {HTMLElement}      root fictive element. The parsed HTML can be found inside the root.childNodes property
  */
 export function parse(data: string, options?: ParsingOptions) {
-	const root = new HTMLElement(null) as HTMLElement & { valid: boolean; };;
+	const root = new HTMLElement('') as HTMLElement & { valid: boolean; };
 	let currentParent: HTMLElement = root;
 	const stack: HTMLElement[] = [root];
 	let lastTextPos = 0;
 	options = options || {};
-	let match: RegExpExecArray;
+	let match: RegExpExecArray | null;
 	while (match = kMarkupPattern.exec(data)) {
 		if(debug) console.log('match', match[0])
 		// Add the text from the last tag or the start of the string until the new tag found (if not empty)
@@ -881,7 +886,7 @@ export function parse(data: string, options?: ParsingOptions) {
 			continue;
 		}
 		if (options.lowerCaseTagName)
-			match[2] = match[2].toLowerCase();
+			match[2] = match[2]?.toLowerCase() || '';
 
 		// Handle opening tags (not </ tags)
 		if (!match[1]) {
@@ -889,12 +894,12 @@ export function parse(data: string, options?: ParsingOptions) {
 				if (kElementsClosedByOpening[currentParent.tagName as 'li'][match[2] as 'li']) {
 					if(debug) console.log('closed', currentParent.tagName, 'when opening', match[2])
 					stack.pop();
-					currentParent = arr_back(stack);
+					currentParent = arr_back(stack) || root;
 				}
 			}
 			if(debug) console.log('add', match[2], 'tag to the stack')
 			currentParent = currentParent.appendChild(
-				new HTMLElement(match[2], match[3].trim()));
+				new HTMLElement(match[2] || '', match[3]?.trim() || ''));
 			stack.push(currentParent);
 			if (kBlockTextElements[match[2] as keyof typeof kBlockTextElements]) {
 				// a little test to find next </script> or </style> ...
@@ -930,14 +935,14 @@ export function parse(data: string, options?: ParsingOptions) {
 				if (currentParent.tagName == match[2]) {
 					if(debug) console.log('met the end of', match[2])
 					stack.pop();
-					currentParent = arr_back(stack);
+					currentParent = arr_back(stack) || root;
 					break;
 				} else if (stack.length > 1) {
 					// Close unclosed child tag before closing the parent
 					// This handles cases like <a><b>text</a> where <b> should be closed before </a>
 					if(debug) console.log('closing unclosed child tag', currentParent.tagName, 'before closing', match[2])
 					stack.pop();
-					currentParent = arr_back(stack);
+					currentParent = arr_back(stack) || root;
 					continue;
 				} else {
 					// No matching tag found to close, exit the loop
@@ -957,8 +962,8 @@ export function parse(data: string, options?: ParsingOptions) {
 	root.valid = stack.length === 1;
 	while (stack.length > 1) {
 		// Handle each error elements.
-		const last = stack.pop();
-		const oneBefore = arr_back(stack);
+		const last = stack.pop()!;
+		const oneBefore = arr_back(stack) || root;
 		if (last.parentNode && last.parentNode instanceof HTMLElement && last.parentNode.parentNode) {
 			if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
 				if(debug) console.log(last.tagName, 'is probably supposed to close', oneBefore.tagName)

@@ -5,7 +5,7 @@ describe('Attribute Operators', () => {
 		const root = parse('<a href="https://example.com">Link</a><span>Text</span>');
 		const result = root.querySelector('[href]');
 		expect(result).toBeTruthy();
-		expect(result.tagName).toBe('a');
+		expect(result?.tagName).toBe('a');
 	});
 
 	it('should support exact match operator [attr="value"]', () => {
@@ -14,9 +14,9 @@ describe('Attribute Operators', () => {
 		const emailInput = root.querySelector('[type="email"]');
 		
 		expect(textInput).toBeTruthy();
-		expect(textInput.attributes.type).toBe('text');
+		expect(textInput?.attributes.type).toBe('text');
 		expect(emailInput).toBeTruthy();
-		expect(emailInput.attributes.type).toBe('email');
+		expect(emailInput?.attributes.type).toBe('email');
 	});
 
 	it('should support starts with operator [attr^="value"]', () => {
@@ -25,9 +25,9 @@ describe('Attribute Operators', () => {
 		const httpLink = root.querySelector('[href^="http://"]');
 		
 		expect(httpsLink).toBeTruthy();
-		expect(httpsLink.attributes.href).toBe('https://example.com');
+		expect(httpsLink?.attributes.href).toBe('https://example.com');
 		expect(httpLink).toBeTruthy();
-		expect(httpLink.attributes.href).toBe('http://test.com');
+		expect(httpLink?.attributes.href).toBe('http://test.com');
 	});
 
 	it('should support ends with operator [attr$="value"]', () => {
@@ -36,9 +36,9 @@ describe('Attribute Operators', () => {
 		const orgLink = root.querySelector('[href$=".org"]');
 		
 		expect(comLink).toBeTruthy();
-		expect(comLink.attributes.href).toBe('https://example.com');
+		expect(comLink?.attributes.href).toBe('https://example.com');
 		expect(orgLink).toBeTruthy();
-		expect(orgLink.attributes.href).toBe('https://test.org');
+		expect(orgLink?.attributes.href).toBe('https://test.org');
 	});
 
 	it('should handle .com in attribute values without treating it as class selector', () => {
@@ -46,10 +46,10 @@ describe('Attribute Operators', () => {
 		
 		const result = root.querySelector('[href$=".com"]');
 		expect(result).toBeTruthy();
-		expect(result.tagName).toBe('a');
-		expect(result.attributes.href).toBe('https://example.com');
+		expect(result?.tagName).toBe('a');
+		expect(result?.attributes.href).toBe('https://example.com');
 		
-		expect(result.attributes.class).toBeUndefined();
+		expect(result?.attributes.class).toBeUndefined();
 	});
 
 	it('should support contains operator [attr*="value"]', () => {
@@ -58,9 +58,9 @@ describe('Attribute Operators', () => {
 		const secondaryBtn = root.querySelector('[class*="secondary"]');
 		
 		expect(primaryBtn).toBeTruthy();
-		expect(primaryBtn.attributes.class).toBe('btn-primary');
+		expect(primaryBtn?.attributes.class).toBe('btn-primary');
 		expect(secondaryBtn).toBeTruthy();
-		expect(secondaryBtn.attributes.class).toBe('btn-secondary');
+		expect(secondaryBtn?.attributes.class).toBe('btn-secondary');
 	});
 
 	it('should support not equal operator [attr!="value"]', () => {
@@ -69,10 +69,10 @@ describe('Attribute Operators', () => {
 		const notText = root.querySelector('[type!="text"]');
 		
 		expect(notHidden).toBeTruthy();
-    console.log(notHidden.toString())
-		expect(notHidden.attributes.type).toBe('text');
+    console.log(notHidden?.toString())
+		expect(notHidden?.attributes.type).toBe('text');
 		expect(notText).toBeTruthy();
-		expect(notText.attributes.type).toBe('hidden');
+		expect(notText?.attributes.type).toBe('hidden');
 	});
 
 	it('should support hyphen operator [attr|="value"]', () => {
@@ -80,8 +80,8 @@ describe('Attribute Operators', () => {
 		const enElements = root.querySelectorAll('[lang|="en"]');
 		
 		expect(enElements.length).toBe(2); // en and en-US
-		expect(enElements[0].attributes.lang).toBe('en');
-		expect(enElements[1].attributes.lang).toBe('en-US');
+		expect(enElements[0]?.attributes.lang).toBe('en');
+		expect(enElements[1]?.attributes.lang).toBe('en-US');
 	});
 
 	it('should support word operator [attr~="value"]', () => {
@@ -90,9 +90,9 @@ describe('Attribute Operators', () => {
 		const largeBtn = root.querySelector('[class~="large"]');
 		
 		expect(primaryBtn).toBeTruthy();
-		expect(primaryBtn.attributes.class).toBe('btn primary large');
+		expect(primaryBtn?.attributes.class).toBe('btn primary large');
 		expect(largeBtn).toBeTruthy();
-		expect(largeBtn.attributes.class).toBe('btn primary large');
+		expect(largeBtn?.attributes.class).toBe('btn primary large');
 	});
 
 	it('should support multiple attributes in same selector', () => {
@@ -100,8 +100,8 @@ describe('Attribute Operators', () => {
 		const result = root.querySelector('input[type="email"][required]');
 		
 		expect(result).toBeTruthy();
-		expect(result.attributes.type).toBe('email');
-		expect(result.attributes.required).toBe('');
+		expect(result?.attributes.type).toBe('email');
+		expect(result?.attributes.required).toBe('');
 	});
 
 	it('should support complex selectors', () => {
@@ -109,10 +109,10 @@ describe('Attribute Operators', () => {
 		const result = root.querySelector('a.phone-link#phone1[href^="tel:"]');
 		
 		expect(result).toBeTruthy();
-		expect(result.tagName).toBe('a');
-		expect(result.attributes.href).toBe('tel:+1234567890');
-		expect(result.attributes.class).toBe('phone-link');
-		expect(result.id).toBe('phone1');
+		expect(result?.tagName).toBe('a');
+		expect(result?.attributes.href).toBe('tel:+1234567890');
+		expect(result?.attributes.class).toBe('phone-link');
+		expect(result?.id).toBe('phone1');
 	});
 
 	it('should handle empty attribute values', () => {
@@ -141,10 +141,10 @@ describe('Attribute Operators', () => {
 		const result = root.querySelector('input[type="email"][name^="user"][data-validation*=".required"][required]');
 		
 		expect(result).toBeTruthy();
-		expect(result.attributes.type).toBe('email');
-		expect(result.attributes.name).toBe('user-email');
-		expect(result.attributes['data-validation']).toBe('email.required');
-		expect(result.attributes.required).toBe('');
+		expect(result?.attributes.type).toBe('email');
+		expect(result?.attributes.name).toBe('user-email');
+		expect(result?.attributes['data-validation']).toBe('email.required');
+		expect(result?.attributes.required).toBe('');
 	});
 
 	it('should be case sensitive for attribute names and values', () => {

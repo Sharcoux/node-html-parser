@@ -33,8 +33,8 @@ describe('Broken HTML', () => {
   <div class="a"data-test="/test.jpg"></div>
   <div class="b"style="background-image:url('test.jpg')"></div>
 </body>`);
-        expect(root.children[0].children.length).toEqual(2);
-        expect(root.children[0].children[0].attributes['data-test']).toEqual(`/test.jpg`);
-        expect(root.children[0].children[1].attributes.style).toEqual(`background-image:url('test.jpg')`);
+        expect(root.children[0]?.children.length).toEqual(2);
+        expect(root.children[0]?.children[0]?.attributes['data-test']).toEqual(`/test.jpg`);
+        expect(root.children[0]?.children[1]?.attributes.style).toEqual(`background-image:url('test.jpg')`);
     });
 });

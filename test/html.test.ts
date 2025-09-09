@@ -300,6 +300,12 @@ describe('HTML Parser', () => {
 			expect(child.tagName).toEqual("svg")
 			expect(child.children.length).toBe(2)
 		})
+
+		it('Make sure that the root element has a tagName', () => {
+			const root = parse('')
+			expect(root.tagName).toEqual('')
+		});
+
 	});
 
 	describe('parseWithValidation', () => {
@@ -559,44 +565,44 @@ describe('HTML Parser', () => {
 		describe('#set_content', () => {
 			it('set content string', () => {
 				const root = parse('<div></div>');
-				root.children[0].set_content('<span><div>abc</div>bla</span>');
+				root.children[0]!.set_content('<span><div>abc</div>bla</span>');
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content nodes', () => {
 				const root = parse('<div></div>');
-				root.children[0].set_content(parse('<span><div>abc</div>bla</span>').childNodes);
+				root.children[0]!.set_content(parse('<span><div>abc</div>bla</span>').childNodes);
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content node', () => {
 				const root = parse('<div></div>');
-				root.children[0].set_content(parse('<span><div>abc</div>bla</span>').childNodes[0]);
+				root.children[0]!.set_content(parse('<span><div>abc</div>bla</span>').childNodes[0]!);
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content text', () => {
 				const root = parse('<div></div>');
-				root.children[0].set_content('abc');
+				root.children[0]!.set_content('abc');
 				expect(root.toString()).toEqual('<div>abc</div>');
 			});
 		});
 		describe('#set innerHTML', () => {
 			it('set content string', () => {
 				const root = parse('<div></div>');
-				root.children[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.children[0]!.innerHTML='<span><div>abc</div>bla</span>';
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content nodes', () => {
 				const root = parse('<div></div>');
-				root.children[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.children[0]!.innerHTML='<span><div>abc</div>bla</span>';
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content node', () => {
 				const root = parse('<div></div>');
-				root.children[0].innerHTML='<span><div>abc</div>bla</span>';
+				root.children[0]!.innerHTML='<span><div>abc</div>bla</span>';
 				expect(root.toString()).toEqual('<div><span><div>abc</div>bla</span></div>');
 			});
 			it('set content text', () => {
 				const root = parse('<div></div>');
-				root.children[0].innerHTML='abc';
+				root.children[0]!.innerHTML='abc';
 				expect(root.toString()).toEqual('<div>abc</div>');
 			});
 		});
@@ -670,4 +676,4 @@ describe('HTML Parser', () => {
 			expect(child.attributes.style).toEqual(`background-image:url('test.jpg')`);
 		});
 	});
-}); 
+});
