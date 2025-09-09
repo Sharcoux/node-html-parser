@@ -152,7 +152,7 @@ export class HTMLElement extends AbstractNode {
 	private _attrs: Attributes | undefined;
 	private _rawAttrs: RawAttributes | undefined;
 	/** This is a short hand for the id attribute of this node */
-	public id: string | undefined;
+	public id: string = '';
 	/** This is a short hand to get the list of the class names attribute of this node */
 	public classNames: string[] = [];
 	/**
@@ -559,7 +559,7 @@ export class HTMLElement extends AbstractNode {
 	setAttribute(key: string, value: string | undefined) {
 		//Update the id property
 		if (key === "id") {
-			this.id = value;
+			this.id = value || '';
 		}
 		//Update the classNames
 		else if (key === "class") {
