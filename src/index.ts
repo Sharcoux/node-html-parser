@@ -827,6 +827,7 @@ const kElementsClosedByOpening = {
 	h5: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	h6: { p: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true },
 	// Table elements
+	colgroup: { tr: true, thead: true, tbody: true, tfoot: true },
 	tr: { tr: true, thead: true, tbody: true, tfoot: true },
 	thead: { tr: true, thead: true, tbody: true, tfoot: true },
 	tbody: { tr: true, thead: true, tbody: true, tfoot: true },
@@ -927,20 +928,27 @@ export function parse(data: string, options?: ParsingOptions) {
 			}
 		}
 
-		// Handle self closing tags
+		// Handle self closing tags and explicit closing tags
+		const closingTag = match[2] as keyof typeof kSelfClosingElements
 		if (match[1] || match[9] ||
-			kSelfClosingElements[match[2] as keyof typeof kSelfClosingElements]) {
+			kSelfClosingElements[closingTag]) {
+			const isClosingTag = !!match[1];
+			const isVoidTag = !!kSelfClosingElements[closingTag];
+			// Ignore invalid closing tags for void elements like </col>
+			if (isClosingTag && isVoidTag) {
+				continue;
+			}
 			// </ or /> or <br> etc.
 			while (true) {
-				if (currentParent.tagName == match[2]) {
-					if(debug) console.log('met the end of', match[2])
+				if (currentParent.tagName == closingTag) {
+					if(debug) console.log('met the end of', closingTag)
 					stack.pop();
 					currentParent = arr_back(stack) || root;
 					break;
 				} else if (stack.length > 1) {
 					// Close unclosed child tag before closing the parent
 					// This handles cases like <a><b>text</a> where <b> should be closed before </a>
-					if(debug) console.log('closing unclosed child tag', currentParent.tagName, 'before closing', match[2])
+					if(debug) console.log('closing unclosed child tag', currentParent.tagName, 'before closing', closingTag)
 					stack.pop();
 					currentParent = arr_back(stack) || root;
 					continue;
@@ -985,7 +993,6 @@ export function parse(data: string, options?: ParsingOptions) {
 			// If it's final element just skip.
 		}
 	}
-
 	return root;
 }
 

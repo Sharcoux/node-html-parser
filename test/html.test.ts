@@ -305,8 +305,25 @@ describe('HTML Parser', () => {
 			const root = parse('')
 			expect(root.tagName).toEqual('')
 		});
-
-	});
+		
+		it ('should parse Table', () => {
+			const root = parse(`<table data-id="390643da-3423-45a4-9922-4f408258a0d6" data-plugin-name="table">
+		<colgroup>
+			<col style=""></col>
+			<col style=""></col>
+		</colgroup>
+		<tr>
+			<td><p>content 1</p></td>
+			<td><p>content 2</p></td>
+		</tr>
+		<tr>
+			<td><p>content 3</p></td>
+			<td><p>content 4</p></td>
+		</tr>
+	</table>`)
+			expect(root.children[0]!.children.map(child => child.tagName).join(',')).toEqual('colgroup,tr,tr')
+		});
+	})
 
 	describe('parseWithValidation', () => {
 		// parse with validation tests
