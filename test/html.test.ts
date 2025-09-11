@@ -323,6 +323,11 @@ describe('HTML Parser', () => {
 	</table>`)
 			expect(root.children[0]!.children.map(child => child.tagName).join(',')).toEqual('colgroup,tr,tr')
 		});
+
+		it('should parse tags with namespace', () => {
+			const root = parse(`<ns:identifier>content</ns:identifier>`)
+			expect(root.querySelector('ns:identifier')?.toString()).toBe('<ns:identifier>content</ns:identifier>')
+		})
 	})
 
 	describe('parseWithValidation', () => {

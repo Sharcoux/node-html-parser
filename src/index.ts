@@ -41,6 +41,8 @@ export abstract class AbstractNode {
 	abstract get rawText(): string;
 	/** Return the html representation of this node */
 	abstract toString(): string;
+	/** Provide a stable JSON representation for test serializers */
+	abstract toJSON(): unknown;
 	/** Return the parent node or null if this node is the root of the tree */
 	public parentNode: HTMLElement | null = null;
 
@@ -85,6 +87,10 @@ export class TextNode extends AbstractNode {
 	toString(): string {
 		return this.rawText;
 	}
+
+	toJSON() {
+		return { type: 'text', value: this.value };
+	}
 }
 
 export class CommentNode extends AbstractNode {
@@ -106,6 +112,10 @@ export class CommentNode extends AbstractNode {
 
 	toString() {
 		return `<!--${this.rawText}-->`;
+	}
+
+	toJSON() {
+		return { type: 'comment', value: this.value };
 	}
 }
 
@@ -514,10 +524,22 @@ export class HTMLElement extends AbstractNode {
 	get attributes() {
 		if (this._attrs)
 			return this._attrs;
-		this._attrs = {};
+		this._attrs = {} as Attributes & { [Symbol.iterator]?: () => Iterator<{ name: string; value: string }> };
 		const attrs = this.rawAttributes;
 		for (const key in attrs) {
 			this._attrs[key] = decode(attrs[key]);
+		}
+		// Make attributes iterable (non-enumerable) to avoid pretty-format DOM plugin crashes
+		if (!(this._attrs as any)[Symbol.iterator]) {
+			Object.defineProperty(this._attrs, Symbol.iterator, {
+				value: function* () {
+					for (const key of Object.keys(this)) {
+						yield { name: key, value: (this as any)[key] };
+					}
+				},
+				enumerable: false,
+				configurable: true
+			});
 		}
 		return this._attrs;
 	}
@@ -608,6 +630,15 @@ export class HTMLElement extends AbstractNode {
 		//Update rawString
 		this.rawAttrs = Object.keys(attributes).map(attr => attr + (attributes[attr] === '' ? '' : ('="' + encode(attributes[attr] + '') + '"'))).join(' ');
 	}
+
+	toJSON() {
+		return {
+			type: 'element',
+			tagName: this.tagName,
+			attributes: this.attributes,
+			children: this.childNodes.map((c) => (c as any).toJSON ? (c as any).toJSON() : c.toString())
+		};
+	}
 }
 
 // Removed old complex function cache system - now using simple composed functions in Matcher class
@@ -635,7 +666,7 @@ export class Matcher {
 	private parseCompleteSelector(selector: string): Array<(el: HTMLElement) => boolean> {
 		// Regex to match complete selector parts (tag#id.class1.class2[attr1][attr2])
 		// This captures each descendant selector part as a whole
-		const selectorPartRegex = /(?:^|\s+)([a-zA-Z*][\w-]*)?(?:#([\w-]+))?(?:\.([\w-]+(?:\.[\w-]+)*))?(\[(?:[^\]]+)\](?:\[(?:[^\]]+)\])*)?/g;
+		const selectorPartRegex = /(?:^|\s+)([a-zA-Z_*][\w:-]*)?(?:#([\w-]+))?(?:\.([\w-]+(?:\.[\w-]+)*))?(\[(?:[^\]]+)\](?:\[(?:[^\]]+)\])*)?/g;
 		
 		const parsedSelectors = [];
 		let match;
