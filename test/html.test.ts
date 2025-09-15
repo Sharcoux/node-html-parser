@@ -328,6 +328,44 @@ describe('HTML Parser', () => {
 			const root = parse(`<ns:identifier>content</ns:identifier>`)
 			expect(root.querySelector('ns:identifier')?.toString()).toBe('<ns:identifier>content</ns:identifier>')
 		})
+
+		it('should parse simple script', () => {
+			const html = `<script src='story_content/triggers.js' type=text/javascript></script>`
+			const root = parse(html)
+			expect(root.querySelector('script')?.outerHTML).toBe(html)
+		})
+
+		it('should not treat "/>" inside quoted attribute as self-closing', () => {
+			const root = parse("<div attr='/>'></div>")
+			const child = root.firstChild as HTMLElement
+			expect(child.tagName).toEqual("div")
+			expect(child.toString()).toBe('<div attr=\'/>\'></div>')
+		})
+
+		it('should handle self closing tag with unquoted value containing slash', () => {
+			const root = parse("<img src=/images/icon.png data=text/javascript />")
+			const child = root.firstChild as HTMLElement
+			expect(child.tagName).toEqual("img")
+			expect(child.attributes.src).toEqual("/images/icon.png")
+			expect(child.attributes.data).toEqual("text/javascript")
+			expect(child.toString()).toBe('<img src=/images/icon.png data=text/javascript />')
+		})
+
+		it('should self-close non-void tag with "/>" and keep attributes', () => {
+			const root = parse("<div data=foo/>")
+			const child = root.firstChild as HTMLElement
+			expect(child.tagName).toEqual("div")
+			expect(child.attributes.data).toEqual("foo")
+			expect(child.toString()).toBe('<div data=foo></div>')
+		})
+
+		it('should not self-close when slash is at end of value but not followed by >', () => {
+			const root = parse("<div data=foo/ ></div>")
+			const child = root.firstChild as HTMLElement
+			expect(child.tagName).toEqual("div")
+			expect(child.attributes.data).toEqual("foo/")
+			expect(child.toString()).toBe('<div data=foo/></div>')
+		})
 	})
 
 	describe('parseWithValidation', () => {

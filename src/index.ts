@@ -830,7 +830,7 @@ export class Matcher {
 }
 
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
-const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)((\s*(?:[a-z][-.:0-9_a-z]*(\s*=\s*("[^"]*?"|'([^']*?')|([^<\/>]+)))?|[^<\/>\s]+))*)\s*(\/?)>/ig;
+const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)((\s*(?:[a-z][-.:0-9_a-z]*(\s*=\s*("[^"]*?"|'[^']*?'|(?:\/(?!>)|[^\s"'<>/])+))?|[^<\/>\s]+))*)\s*(\/?)>/ig;
 const kIdClassAttributePattern = /(^|\s)(id|class)\s*=\s*("([^"]+)"|'([^']+)'|(\S+))/ig;
 const kAttributePattern = /([a-z][-.:0-9_a-z]*)(\s*=\s*("([^"]*)"|'([^']*)'|(\S+)))?/ig
 const kSelfClosingElements = {
@@ -922,7 +922,7 @@ export function parse(data: string, options?: ParsingOptions) {
 
 		// Handle opening tags (not </ tags)
 		if (!match[1]) {
-			if (!match[9] && kElementsClosedByOpening[currentParent.tagName as keyof typeof kElementsClosedByOpening]) {
+			if (!match[7] && kElementsClosedByOpening[currentParent.tagName as keyof typeof kElementsClosedByOpening]) {
 				if (kElementsClosedByOpening[currentParent.tagName as 'li'][match[2] as 'li']) {
 					if(debug) console.log('closed', currentParent.tagName, 'when opening', match[2])
 					stack.pop();
@@ -941,7 +941,7 @@ export function parse(data: string, options?: ParsingOptions) {
 					let text: string;
 					if (index == -1) {
 						// there is no matching ending for the text element.
-						text = data.substr(kMarkupPattern.lastIndex);
+						text = data.slice(kMarkupPattern.lastIndex);
 					} else {
 						text = data.substring(kMarkupPattern.lastIndex, index);
 					}
@@ -961,7 +961,7 @@ export function parse(data: string, options?: ParsingOptions) {
 
 		// Handle self closing tags and explicit closing tags
 		const closingTag = match[2] as keyof typeof kSelfClosingElements
-		if (match[1] || match[9] ||
+		if (match[1] || match[7] ||
 			kSelfClosingElements[closingTag]) {
 			const isClosingTag = !!match[1];
 			const isVoidTag = !!kSelfClosingElements[closingTag];
