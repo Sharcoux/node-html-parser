@@ -188,6 +188,92 @@ describe('HTML Parser', () => {
 			expect(root.lastChild.rawText).toEqual('2&amp;');
 		});
 
+		it('should parse children of <template> as normal elements', () => {
+			const root = parse(`<template>
+  <div id="inner"><span>hello</span></div>
+</template>`);
+
+			expect(root.querySelectorAll('div')).toHaveLength(1);
+			expect(root.querySelector('div')?.getAttribute('id')).toBe('inner');
+			expect(root.querySelector('span')?.text?.trim()).toBe('hello');
+		});
+
+		it('should parse nested <template> elements', () => {
+			const root = parse(`<template>
+  <template id="inner">
+    <span id="nested">ok</span>
+  </template>
+</template>`);
+
+			expect(root.querySelectorAll('span')).toHaveLength(1);
+			expect(root.querySelector('span')?.getAttribute('id')).toBe('nested');
+		});
+
+		it('should tolerate newline before > on opening tags', () => {
+			const root = parse(`<div id="a"
+>
+  <span>hi</span>
+</div>`);
+
+			expect(root.querySelectorAll('div')).toHaveLength(1);
+			expect(root.querySelector('div')?.getAttribute('id')).toBe('a');
+			expect(root.querySelector('span')?.text?.trim()).toBe('hi');
+		});
+
+		it('should tolerate newline before > on closing tags', () => {
+			const root = parse(`<div id="a">ok</div
+>`);
+
+			expect(root.querySelectorAll('div')).toHaveLength(1);
+			expect(root.querySelector('div')?.text?.trim()).toBe('ok');
+		});
+
+		it('should tolerate newline before /> on self-closing tags', () => {
+			const root = parse(`<div>
+  <test
+/>
+  <img src="x"
+/>
+  <br
+>
+</div>`);
+
+			expect(root.querySelectorAll('test')).toHaveLength(1);
+			expect(root.querySelector('test')?.childNodes).toHaveLength(0);
+			expect(root.querySelectorAll('img')).toHaveLength(1);
+			expect(root.querySelector('img')?.getAttribute('src')).toBe('x');
+			expect(root.querySelectorAll('br')).toHaveLength(1);
+		});
+
+		it('should parse block-text closing tags with whitespace before >', () => {
+			const withScript = parse(`<div>
+  <script>var x = 1;
+</script
+>
+  <span id="after">ok</span>
+</div>`, { script: true });
+
+			expect(withScript.querySelectorAll('script')).toHaveLength(1);
+			expect(withScript.querySelector('script')?.text?.trim()).toBe('var x = 1;');
+			expect(withScript.querySelector('script')?.text).not.toContain('</script');
+			expect(withScript.querySelector('span')?.getAttribute('id')).toBe('after');
+
+			const withStyle = parse(`<style>body{}
+</style
+>`, { style: true });
+
+			expect(withStyle.querySelectorAll('style')).toHaveLength(1);
+			expect(withStyle.querySelector('style')?.text?.trim()).toBe('body{}');
+			expect(withStyle.querySelector('style')?.text).not.toContain('</style');
+
+			const withSpace = parse(
+				`<div><script>a</script ><span id="after">b</span></div>`,
+				{ script: true },
+			);
+			expect(withSpace.querySelector('script')?.text?.trim()).toBe('a');
+			expect(withSpace.querySelector('span')?.getAttribute('id')).toBe('after');
+		});
+
 		it('should be able to parse "html/incomplete-script" file', () => {
 
 			parse(fs.readFileSync(__dirname + '/html/incomplete-script').toString(), {

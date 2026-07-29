@@ -934,9 +934,13 @@ export function parse(data: string, options?: ParsingOptions) {
 				new HTMLElement(match[2] || '', match[3]?.trim() || ''));
 			stack.push(currentParent);
 			if (kBlockTextElements[match[2] as keyof typeof kBlockTextElements]) {
-				// a little test to find next </script> or </style> ...
-				let closeMarkup = '</' + match[2] + '>';
-				let index = data.indexOf(closeMarkup, kMarkupPattern.lastIndex);
+				// Find next </script> / </style> / … allowing whitespace before `>`,
+				// e.g. `</script\n>` or `</script >` (common in XFA template XML).
+				const closePattern = new RegExp('</' + match[2] + '\\s*>', 'ig');
+				closePattern.lastIndex = kMarkupPattern.lastIndex;
+				const closeMatch = closePattern.exec(data);
+				const index = closeMatch ? closeMatch.index : -1;
+				const closeLength = closeMatch ? closeMatch[0].length : 0;
 				if (options[match[2] as keyof typeof options]) {
 					let text: string;
 					if (index == -1) {
@@ -953,7 +957,7 @@ export function parse(data: string, options?: ParsingOptions) {
 				if (index == -1) {
 					lastTextPos = kMarkupPattern.lastIndex = data.length + 1;
 				} else {
-					lastTextPos = kMarkupPattern.lastIndex = index + closeMarkup.length;
+					lastTextPos = kMarkupPattern.lastIndex = index + closeLength;
 					match[1] = 'true';
 				}
 			}
